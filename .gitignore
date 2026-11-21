@@ -1,0 +1,19 @@
+# Godot (fichiers générés automatiquement)
+.godot/
+*.import
+!*.svg.import
+export_credentials.cfg
+
+# Versions compilées (publiées dans les « Releases » GitHub, pas dans le dépôt)
+build/
+
+# SECRETS : ne jamais versionner les clés de signature Android
+*.keystore
+*.jks
+*.idsig
+*.pass
+
+# Système
+.DS_Store
+Thumbs.db
+*.tmp
