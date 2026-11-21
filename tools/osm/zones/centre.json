@@ -1,0 +1,76 @@
+{
+  "id": "centre",
+  "name": "Centre-ville — Kasa-Vubu / Lingwala, Kinshasa",
+  "origin": [
+    -4.3416961,
+    15.2963312
+  ],
+  "bbox": [
+    15.286,
+    -4.35,
+    15.318,
+    -4.322
+  ],
+  "skip_ways": [],
+  "clear": [],
+  "shapes": {
+    "stade": "way:4402561",
+    "palais": "relation:7335461",
+    "hopital_site": "way:102422512"
+  },
+  "overrides": [
+    {
+      "note": "Hôpital du Cinquantenaire : d'après photos (blocs blancs à hublots rouges, ailes basses en brique rouge). Hauteurs estimées.",
+      "within": "hopital_site",
+      "rules": [
+        {
+          "min_area": 2500,
+          "levels": 6,
+          "wall": [
+            0.95,
+            0.95,
+            0.94
+          ],
+          "flat": 1,
+          "style": "hublots",
+          "tag": "hopital_principal"
+        },
+        {
+          "min_area": 1000,
+          "levels": 5,
+          "wall": [
+            0.95,
+            0.95,
+            0.94
+          ],
+          "flat": 1,
+          "style": "hublots"
+        },
+        {
+          "min_area": 300,
+          "levels": 2,
+          "wall": [
+            0.66,
+            0.31,
+            0.22
+          ],
+          "flat": 1
+        },
+        {
+          "min_area": 0,
+          "levels": 1,
+          "wall": [
+            0.66,
+            0.31,
+            0.22
+          ],
+          "flat": 1
+        }
+      ]
+    }
+  ],
+  "monument_clearance": {
+    "stade": 45,
+    "palais": 30
+  }
+}

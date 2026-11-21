@@ -142,10 +142,12 @@ func _end_active() -> void:
 
 func _spawn_next_giver() -> void:
 	for m in MissionData.MISSIONS:
+		if m.get("zone", "limete") != GameState.zone:
+			continue
 		if not GameState.completed.has(m["id"]):
 			_giver_mission = m
 			var raw := Vector2(m["giver_at"][0], m["giver_at"][1])
-			var p := city.nearest_road_point(raw)
+			var p := city.nearest_road_point(raw, ["trunk", "primary", "secondary", "tertiary", "unclassified", "residential"])
 			p += (raw - p).limit_length(2.5)
 			_giver = _make_giver(m["giver"])
 			add_child(_giver)
@@ -153,7 +155,8 @@ func _spawn_next_giver() -> void:
 			objective_changed.emit("Va parler à %s (point jaune « ! »)" % m["giver"], m["giver"])
 			return
 	_giver_mission = {}
-	objective_changed.emit("Toutes les missions sont terminées. Bientôt : Gombe, le fleuve et Brazzaville !", "")
+	var other := "le centre-ville (Cinquantenaire)" if GameState.zone == "limete" else "Limete (Échangeur)"
+	objective_changed.emit("Missions de la zone terminées ! Prends un taxi (MENU) vers %s." % other, "")
 
 
 func _resolve(step: Dictionary) -> Vector2:

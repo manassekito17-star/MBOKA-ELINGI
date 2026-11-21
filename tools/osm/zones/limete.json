@@ -1,0 +1,10 @@
+{
+  "id": "limete",
+  "name": "Limete — Échangeur, Kinshasa",
+  "origin": [-4.374384, 15.345467],
+  "bbox": [15.328, -4.385, 15.356, -4.345],
+  "skip_ways": ["57890331"],
+  "clear": [[0, 0, 90]],
+  "shapes": {},
+  "overrides": []
+}

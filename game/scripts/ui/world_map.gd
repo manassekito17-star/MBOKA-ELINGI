@@ -240,8 +240,13 @@ func _draw() -> void:
 		elif r["type"] in ["footway", "path"]:
 			col = Color(0.32, 0.32, 0.30)
 		draw_polyline(r["pts"], col, maxf(w, 1.5 / _zoom))
-	# Esplanade de la Tour.
-	draw_circle(Vector2.ZERO, 36.0, Color(0.55, 0.45, 0.25))
+	# Esplanade de la Tour / monuments de la zone.
+	if GameState.zone == "limete":
+		draw_circle(Vector2.ZERO, 36.0, Color(0.55, 0.45, 0.25))
+	for key in city.data.get("shapes", {}):
+		var shp := city.shape(key)
+		if shp.size() >= 3:
+			draw_colored_polygon(shp, Color(0.45, 0.35, 0.2, 0.5) if key == "hopital_site" else Color(0.75, 0.6, 0.3))
 	draw_set_transform(Vector2.ZERO)
 
 	var font := get_theme_default_font()
@@ -256,8 +261,9 @@ func _draw() -> void:
 		_icon(s, CATEGORIES[ci][1], CATEGORIES[ci][2], font, 9.0)
 		if _zoom > 1.6:
 			draw_string(font, s + Vector2(12, 5), p["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1, 1, 1, 0.85))
-	_icon(_to_screen(Vector2.ZERO), Color(1, 0.8, 0.2), "T", font, 13.0)
-	draw_string(font, _to_screen(Vector2.ZERO) + Vector2(16, 6), "Tour de l'Échangeur", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(1, 0.9, 0.6))
+	var is_lim := GameState.zone == "limete"
+	_icon(_to_screen(Vector2.ZERO), Color(1, 0.8, 0.2) if is_lim else Color(0.9, 0.2, 0.2), "T" if is_lim else "+", font, 13.0)
+	draw_string(font, _to_screen(Vector2.ZERO) + Vector2(16, 6), "Tour de l'Échangeur" if is_lim else "Hôpital du Cinquantenaire", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(1, 0.9, 0.6))
 	# Objectif de mission.
 	if missions and missions.has_target():
 		var t := _to_screen(missions.current_target())
@@ -283,7 +289,7 @@ func _draw() -> void:
 		var y := 72.0 + i * 28.0
 		_icon(Vector2(lx + 10, y - 6), CATEGORIES[i][1], CATEGORIES[i][2], font, 9.0)
 		draw_string(font, Vector2(lx + 28, y), CATEGORIES[i][0], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-	draw_string(font, Vector2(20, 36), "KINSHASA — LIMETE / ÉCHANGEUR", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color(1, 0.8, 0.3))
+	draw_string(font, Vector2(20, 36), city.data.get("name", "Kinshasa").to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color(1, 0.8, 0.3))
 	draw_string(font, Vector2(20, 62), "Cliquez ou touchez la carte pour placer une destination.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.85, 0.85, 0.85))
 	# Échelle.
 	var meters := 100.0 if _zoom > 0.6 else 500.0

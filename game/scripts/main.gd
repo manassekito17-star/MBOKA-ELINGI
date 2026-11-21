@@ -2,8 +2,18 @@ extends Node3D
 ## Point d'entrée du jeu : crée le monde (ciel, soleil, ville réelle,
 ## monuments), le joueur, la circulation, les missions et l'interface.
 
-const CITY_DATA := "res://data/limete_echangeur.json"
-const SPAWN := Vector2(-35.0, -140.0)   # près de la Tour de l'Échangeur (coordonnées carte)
+## Zones de Kinshasa (une carte chargée à la fois, pour la fluidité sur mobile).
+const ZONES := {
+	"limete": {"data": "res://data/limete_echangeur.json", "spawn": Vector2(-35.0, -140.0),
+		"title": "Kinshasa — Limete, Échangeur", "landmark": "Tour de l'Échangeur", "yaw": 200.0},
+	"centre": {"data": "res://data/centre_cinquantenaire.json", "spawn": Vector2(40.0, -215.0),
+		"title": "Kinshasa — Kasa-Vubu / Lingwala", "landmark": "Hôpital du Cinquantenaire", "yaw": 0.0},
+}
+const PLACE_LABELS := {
+	"limete": ["w354099810", "w4708901", "w363665145", "w1028400780", "n6581449658",
+		"n5179741368", "w60658740", "w597453176", "n713203655", "w598082245"],
+	"centre": ["n9976991392", "n5194480062", "w341027474", "w1359580707", "n9976991391", "n2172461520"],
+}
 
 var city: CityBuilder
 var player: Player
@@ -11,47 +21,62 @@ var hud: HUD
 var missions: MissionManager
 var traffic: Traffic
 var _tower: TourEchangeur
+var _hopital: HopitalCinquantenaire
+var _palais: PalaisDuPeuple
 
 
 func _ready() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--zone="):
+			GameState.zone = arg.trim_prefix("--zone=")
 	_setup_environment()
 	hud = HUD.new()
 	add_child(hud)
+	var zone: Dictionary = ZONES.get(GameState.zone, ZONES["limete"])
+	hud.set_title(zone["title"])
 	hud.set_loading(0.0, "Chargement de la carte de Kinshasa…")
 	await get_tree().process_frame
 
 	city = CityBuilder.new()
 	city.name = "Ville"
 	add_child(city)
-	if not city.load_data(CITY_DATA):
+	if not city.load_data(zone["data"]):
 		hud.set_loading(0.0, "Erreur : données de la ville introuvables.")
 		return
 	city.progress.connect(hud.set_loading)
 	await city.build()
 
-	var tower := TourEchangeur.new()
-	tower.name = "TourEchangeur"
-	city.add_child(tower)
-	_tower = tower
-	var lumumba_poi := city.find_poi("n2298412028")
-	if not lumumba_poi.is_empty():
-		var monument := MonumentLumumba.new()
-		monument.position = CityBuilder.to_world(lumumba_poi["x"], lumumba_poi["y"])
-		city.add_child(monument)
+	if GameState.zone == "limete":
+		var tower := TourEchangeur.new()
+		tower.name = "TourEchangeur"
+		city.add_child(tower)
+		_tower = tower
+		var lumumba_poi := city.find_poi("n2298412028")
+		if not lumumba_poi.is_empty():
+			var monument := MonumentLumumba.new()
+			monument.position = CityBuilder.to_world(lumumba_poi["x"], lumumba_poi["y"])
+			city.add_child(monument)
+		for fb in city.data.get("footbridges", []):
+			var pas := Passerelle.new().setup(Vector2(fb["a"][0], fb["a"][1]), Vector2(fb["b"][0], fb["b"][1]))
+			city.add_child(pas)
+	else:
+		_hopital = HopitalCinquantenaire.new().setup(city)
+		city.add_child(_hopital)
+		city.add_child(StadeMartyrs.new().setup(city.shape("stade")))
+		_palais = PalaisDuPeuple.new().setup(city.shape("palais"), city)
+		city.add_child(_palais)
 	_add_place_labels()
-	for fb in city.data.get("footbridges", []):
-		var pas := Passerelle.new().setup(Vector2(fb["a"][0], fb["a"][1]), Vector2(fb["b"][0], fb["b"][1]))
-		city.add_child(pas)
 
 	player = Player.new()
 	player.name = "Joueur"
 	add_child(player)
-	var spawn := city.nearest_road_point(SPAWN)
+	var spawn := city.nearest_road_point(zone["spawn"], ["trunk", "primary", "secondary", "tertiary", "unclassified", "residential"])
 	player.global_position = CityBuilder.to_world(spawn.x, spawn.y, 1.0)
-	player.look(deg_to_rad(200), 0.0)
+	player.look(deg_to_rad(zone["yaw"]), 0.0)
 
-	_tower.player = player
-	_tower.hint.connect(hud.show_hint)
+	if _tower:
+		_tower.player = player
+		_tower.hint.connect(hud.show_hint)
 	traffic = Traffic.new()
 	add_child(traffic)
 	traffic.setup(city, player)
@@ -61,7 +86,7 @@ func _ready() -> void:
 	hud.bind(player, missions, city)
 	missions.setup(city, player)
 	hud.set_loading(1.0, "")
-	hud.notify("Mbote ! Bienvenue à Limete, Kinshasa.")
+	hud.notify("Mbote ! Bienvenue : %s." % zone["title"].trim_prefix("Kinshasa — "))
 	_handle_test_args()
 
 
@@ -71,6 +96,7 @@ func _ready() -> void:
 func _handle_test_args() -> void:
 	var capture := ""
 	var portrait := false
+	# (la zone de test se choisit avant le chargement : voir _init_test_zone)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--capture="):
 			capture = arg.trim_prefix("--capture=")
@@ -95,6 +121,21 @@ func _handle_test_args() -> void:
 			cam.global_position = CityBuilder.to_world(float(f[0]), float(f[1]), float(f[2]))
 			cam.rotation_degrees = Vector3(float(f[4]), float(f[3]), 0)
 			cam.current = true
+		elif arg == "--hopital" and _hopital:
+			var hc := Camera3D.new()
+			hc.far = 3000.0
+			hc.fov = 60.0
+			add_child(hc)
+			hc.global_position = _hopital.view_from
+			hc.look_at(_hopital.view_to)
+			hc.current = true
+		elif arg == "--palais" and _palais:
+			var pc := Camera3D.new()
+			pc.far = 3000.0
+			add_child(pc)
+			pc.global_position = _palais.view_from
+			pc.look_at(_palais.view_to)
+			pc.current = true
 		elif arg == "--top":
 			player.global_position = Vector3(0, 158.5, 9.0)
 		elif arg == "--portrait":
@@ -159,9 +200,7 @@ func _setup_environment() -> void:
 
 ## Panneaux flottants sur quelques lieux réels connus du quartier.
 func _add_place_labels() -> void:
-	var famous := ["w354099810", "w4708901", "w363665145", "w1028400780", "n6581449658",
-		"n5179741368", "w60658740", "w597453176", "n713203655", "w598082245"]
-	for id in famous:
+	for id in PLACE_LABELS.get(GameState.zone, []):
 		var p := city.find_poi(id)
 		if p.is_empty():
 			continue

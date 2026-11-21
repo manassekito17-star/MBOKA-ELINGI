@@ -14,6 +14,7 @@ const SAVE_VERSION := 1
 
 var money: int = 2000          # francs congolais (FC)
 var completed: Array = []      # identifiants des missions terminées
+var zone := "limete"           # zone de Kinshasa chargée (voir main.gd)
 
 
 func _ready() -> void:
@@ -42,7 +43,7 @@ func save_game() -> void:
 	if f == null:
 		push_warning("Sauvegarde impossible : %s" % FileAccess.get_open_error())
 		return
-	f.store_string(JSON.stringify({"v": SAVE_VERSION, "money": money, "completed": completed}))
+	f.store_string(JSON.stringify({"v": SAVE_VERSION, "money": money, "completed": completed, "zone": zone}))
 
 
 func load_game() -> void:
@@ -54,6 +55,8 @@ func load_game() -> void:
 		return
 	if typeof(data.get("money")) in [TYPE_INT, TYPE_FLOAT]:
 		money = clampi(int(data["money"]), 0, 1_000_000_000)
+	if data.get("zone") in ["limete", "centre"]:
+		zone = data["zone"]
 	if typeof(data.get("completed")) == TYPE_ARRAY:
 		completed = data["completed"].filter(func(x): return typeof(x) == TYPE_STRING)
 
@@ -61,6 +64,7 @@ func load_game() -> void:
 func reset_progress() -> void:
 	money = 2000
 	completed = []
+	zone = "limete"
 	save_game()
 	money_changed.emit(money)
 

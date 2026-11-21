@@ -22,6 +22,8 @@ var _pause: PanelContainer
 var _loading: ColorRect
 var _loading_bar: ProgressBar
 var _loading_label: Label
+var _loading_title: Label
+const TAXI_PRICE := 1000
 
 
 func _ready() -> void:
@@ -163,6 +165,24 @@ func _process(_delta: float) -> void:
 		missions.accept()
 
 
+func set_title(t: String) -> void:
+	if _loading_title:
+		_loading_title.text = t
+
+
+func _travel(target: String) -> void:
+	if target == GameState.zone:
+		return
+	if not GameState.can_pay(TAXI_PRICE):
+		notify("Pas assez d'argent pour le taxi (%s FC)." % MissionManager._fmt(TAXI_PRICE))
+		return
+	GameState.add_money(-TAXI_PRICE)
+	GameState.zone = target
+	GameState.save_game()
+	get_tree().paused = false
+	get_tree().reload_current_scene()
+
+
 func show_hint(text: String) -> void:
 	_hint.text = text
 
@@ -267,7 +287,7 @@ func _build_pause(root: Control) -> void:
 	_pause.process_mode = Node.PROCESS_MODE_ALWAYS
 	_pause.set_anchors_preset(Control.PRESET_CENTER)
 	_pause.custom_minimum_size = Vector2(560, 0)
-	_pause.position = Vector2(-280, -230)
+	_pause.position = Vector2(-280, -300)
 	_pause.add_theme_stylebox_override("panel", _style(Color(0.08, 0.07, 0.06, 0.95), Color(0.95, 0.7, 0.2)))
 	_pause.visible = false
 	root.add_child(_pause)
@@ -282,6 +302,16 @@ func _build_pause(root: Control) -> void:
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.text = "PC : Z/Q/S/D ou flèches pour marcher, Maj pour courir, Espace pour sauter, clic pour orienter la caméra à la souris, Échap pour libérer la souris, E pour accepter une mission.\nMobile : joystick à gauche, glisser à droite pour la caméra.\n\nCarte : © les contributeurs d'OpenStreetMap (ODbL)."
 	v.add_child(help)
+	var travel := _label(20, Color(1, 0.85, 0.4))
+	travel.text = "Voyager en taxi (%s FC) :" % MissionManager._fmt(TAXI_PRICE)
+	v.add_child(travel)
+	for dest in [["Limete — Tour de l'Échangeur", "limete"], ["Centre-ville — Hôpital du Cinquantenaire", "centre"]]:
+		var tb := Button.new()
+		tb.text = "  " + dest[0] + ("  (vous êtes ici)" if GameState.zone == dest[1] else "")
+		tb.disabled = GameState.zone == dest[1]
+		tb.add_theme_font_size_override("font_size", 20)
+		tb.pressed.connect(_travel.bind(dest[1]))
+		v.add_child(tb)
 	for entry in [["Reprendre", toggle_pause], ["Recommencer la progression", _reset], ["Quitter le jeu", func(): get_tree().quit()]]:
 		var b := Button.new()
 		b.text = entry[0]
@@ -306,7 +336,8 @@ func _build_loading(root: Control) -> void:
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	var st := _label(20, Color(0.9, 0.85, 0.75))
-	st.text = "Kinshasa — Limete, Échangeur"
+	_loading_title = st
+	st.text = "Kinshasa"
 	st.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(st)
 	_loading_bar = ProgressBar.new()

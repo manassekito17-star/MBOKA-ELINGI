@@ -6,7 +6,9 @@ Ville réelle générée depuis OpenStreetMap, Tour de l'Échangeur, monument Lu
 ## ✅ v0.2 : Limete agrandie et réaliste (livrée)
 Carte de l'Échangeur à la 7e rue, 44 647 bâtiments, toits à deux pentes, murs de parcelles, lampadaires, vrais arbres, passerelles praticables, ascenseur de la Tour, personnages humains 3D animés, minibus 207.
 
-## v0.3 : centre-ville et bâtiments célèbres (prochaine étape)
+## ✅ v0.3 : centre-ville et bâtiments célèbres (livrée en partie)
+Livrés : Hôpital du Cinquantenaire, Stade des Martyrs et Palais du Peuple d'après photos, voyage en taxi, nouveau style de maisons.
+Restent à faire (photos bienvenues) :
 - **Lingwala / Kasa-Vubu / Gombe** : Hôpital du Cinquantenaire, Stade des Martyrs, Palais du Peuple, boulevard du 30 Juin, Tour Sozacom, Hôtel du Fleuve, cathédrale Notre-Dame du Congo, gare centrale. Chaque monument sera modélisé à la main d'après des photos.
 
 ## v0.4 : Gombe, le fleuve et Brazzaville

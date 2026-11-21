@@ -15,16 +15,14 @@ const VIEW_RANGE := 620.0
 const GRID_CELL := 2.0
 
 const WALLS := [
-	Color(0.90, 0.86, 0.76), Color(0.93, 0.93, 0.90), Color(0.85, 0.68, 0.42),
-	Color(0.60, 0.74, 0.85), Color(0.66, 0.80, 0.62), Color(0.88, 0.66, 0.62),
-	Color(0.75, 0.74, 0.72), Color(0.92, 0.80, 0.45), Color(0.76, 0.47, 0.33),
-	Color(0.62, 0.60, 0.56), Color(0.62, 0.60, 0.56), Color(0.90, 0.86, 0.76),
+	Color(0.95, 0.94, 0.90), Color(0.93, 0.90, 0.82), Color(0.88, 0.83, 0.72), Color(0.96, 0.95, 0.93),
+	Color(0.85, 0.74, 0.58), Color(0.80, 0.66, 0.48), Color(0.90, 0.86, 0.76), Color(0.72, 0.80, 0.86),
+	Color(0.86, 0.78, 0.70), Color(0.75, 0.73, 0.70), Color(0.94, 0.92, 0.86), Color(0.82, 0.86, 0.74),
 ]
-const METAL_ROOFS := [
-	Color(0.62, 0.64, 0.66), Color(0.62, 0.64, 0.66), Color(0.52, 0.33, 0.22),
-	Color(0.52, 0.33, 0.22), Color(0.25, 0.38, 0.58), Color(0.58, 0.20, 0.16),
-	Color(0.26, 0.42, 0.30),
-]
+## Toits : tuiles terre cuite, ardoise anthracite, tôle.
+const ROOF_TILES := [Color(0.66, 0.30, 0.18), Color(0.72, 0.38, 0.22), Color(0.58, 0.26, 0.16),
+	Color(0.22, 0.23, 0.25), Color(0.30, 0.31, 0.33), Color(0.26, 0.27, 0.30)]
+const METAL_ROOFS := [Color(0.62, 0.64, 0.66), Color(0.52, 0.33, 0.22), Color(0.25, 0.38, 0.58), Color(0.58, 0.20, 0.16)]
 const ROAD_LEVEL := {
 	"trunk": 0.09, "primary": 0.09, "trunk_link": 0.085, "primary_link": 0.085,
 	"secondary": 0.08, "secondary_link": 0.075, "tertiary": 0.07, "tertiary_link": 0.065,
@@ -62,6 +60,19 @@ func load_data(path: String) -> bool:
 	bounds = Rect2(b[0], b[1], b[2] - b[0], b[3] - b[1])
 	pois = data.get("pois", [])
 	return true
+
+
+## Bâtiment portant une étiquette (ex. "hopital_principal") : contour + hauteur.
+func find_building(tag: String) -> Dictionary:
+	for b in data.get("buildings", []):
+		if b.get("tag", "") == tag:
+			return {"poly": _to_poly(b["p"]), "h": b["h"]}
+	return {}
+
+
+func shape(key: String) -> PackedVector2Array:
+	var sh: Dictionary = data.get("shapes", {})
+	return _to_poly(sh[key]) if sh.has(key) else PackedVector2Array()
 
 
 func find_poi(id: String) -> Dictionary:
@@ -309,7 +320,7 @@ func _build_parcel_walls() -> void:
 						continue
 					var key := _chunk_key(mid)
 					if not chunks.has(key):
-						chunks[key] = {"v": PackedVector3Array(), "n": PackedVector3Array(), "c": PackedColorArray(), "uv": PackedVector2Array(), "col": PackedVector3Array()}
+						chunks[key] = {"v": PackedVector3Array(), "n": PackedVector3Array(), "c": PackedColorArray(), "uv": PackedVector2Array(), "uv2": PackedVector2Array(), "col": PackedVector3Array()}
 					var ch: Dictionary = chunks[key]
 					var c := Color(wall_col.r * 0.92, wall_col.g * 0.92, wall_col.b * 0.92, 0.85)
 					for face in [1.0, -1.0]:
@@ -326,6 +337,7 @@ func _build_parcel_walls() -> void:
 							ch["n"].append(nrm if face > 0 else -nrm)
 							ch["c"].append(c)
 							ch["uv"].append(Vector2(v.x + v.z, v.y))
+							ch["uv2"].append(Vector2.ZERO)
 						if face > 0:
 							for v in [v0, v1, v2, v0, v2, v3]:
 								ch["col"].append(v)
@@ -340,6 +352,7 @@ func _build_parcel_walls() -> void:
 		arrays[Mesh.ARRAY_NORMAL] = ch["n"]
 		arrays[Mesh.ARRAY_COLOR] = ch["c"]
 		arrays[Mesh.ARRAY_TEX_UV] = ch["uv"]
+		arrays[Mesh.ARRAY_TEX_UV2] = ch["uv2"]
 		var mesh := ArrayMesh.new()
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		var mi := MeshInstance3D.new()
@@ -443,14 +456,19 @@ func _build_buildings() -> void:
 		var wall: Color = WALLS[int(b["w"]) % WALLS.size()]
 		var roof: Color
 		var roof_type := 0.0
+		if b.has("wc"):
+			wall = Color(b["wc"][0], b["wc"][1], b["wc"][2])
 		if kind == "church" or kind == "cathedral":
 			wall = Color(0.95, 0.94, 0.90)
 			h = maxf(h, 11.0)
 		elif kind in ["industrial", "warehouse"]:
 			wall = [Color(0.74, 0.76, 0.78), Color(0.55, 0.65, 0.75), Color(0.82, 0.80, 0.74)][int(b["w"]) % 3]
-		if h > 7.0 and not kind in ["industrial", "warehouse"]:
+		if (h > 7.0 and not kind in ["industrial", "warehouse"]) or b.get("rf", 0) == 1:
 			roof = Color(0.68, 0.66, 0.62)
 			roof_type = 0.5
+		elif int(b["r"]) % 10 < 7:
+			roof = ROOF_TILES[int(b["r"]) % ROOF_TILES.size()]
+			roof_type = 0.15
 		else:
 			roof = METAL_ROOFS[int(b["r"]) % METAL_ROOFS.size()]
 		var center := Vector2.ZERO
@@ -462,12 +480,13 @@ func _build_buildings() -> void:
 		if not chunks.has(key):
 			chunks[key] = {
 				"v": PackedVector3Array(), "n": PackedVector3Array(), "c": PackedColorArray(),
-				"uv": PackedVector2Array(), "col": PackedVector3Array(),
+				"uv": PackedVector2Array(), "uv2": PackedVector2Array(), "col": PackedVector3Array(),
 			}
 		var ch: Dictionary = chunks[key]
 		# Murs
 		var perim := 0.0
 		var wc := Color(wall.r, wall.g, wall.b, 1.0)
+		var front_edge: int = int(b.get("fe", -1))
 		for i in poly.size():
 			var a := poly[i]
 			var bb := poly[(i + 1) % poly.size()]
@@ -484,16 +503,21 @@ func _build_buildings() -> void:
 			var uva1 := Vector2(perim, h)
 			var uvb0 := Vector2(perim + seg, 0)
 			var uvb1 := Vector2(perim + seg, h)
-			for pair in [[a0, uva0], [a1, uva1], [b1, uvb1], [a0, uva0], [b1, uvb1], [b0, uvb0]]:
+			# Couleur alpha 0.97 = façade sur rue (porte, garage) ; UV2 = (position, longueur du mur).
+			var ec := Color(wc.r, wc.g, wc.b, 0.97 if i == front_edge else 1.0)
+			if b.get("st", "") == "hublots":
+				ec.a = 0.93
+			for pair in [[a0, uva0, 0.0], [a1, uva1, 0.0], [b1, uvb1, seg], [a0, uva0, 0.0], [b1, uvb1, seg], [b0, uvb0, seg]]:
 				ch["v"].append(pair[0])
 				ch["uv"].append(pair[1])
+				ch["uv2"].append(Vector2(pair[2], seg))
 				ch["n"].append(nrm)
-				ch["c"].append(wc)
+				ch["c"].append(ec)
 				ch["col"].append(pair[0])
 			perim += seg
 		# Toit : deux pentes en tôle pour les maisons rectangulaires, plat sinon.
 		var rc := Color(roof.r, roof.g, roof.b, roof_type)
-		if poly.size() == 4 and roof_type < 0.25 and h < 7.5 and _is_convex(poly):
+		if poly.size() == 4 and roof_type < 0.25 and h < 10.5 and _is_convex(poly):
 			_gable_roof(ch, poly, h, rc, wc, int(b["r"]))
 		else:
 			var idx := Geometry2D.triangulate_polygon(poly)
@@ -504,6 +528,7 @@ func _build_buildings() -> void:
 				for p in tri:
 					ch["v"].append(to_world(p.x, p.y, h))
 					ch["uv"].append(Vector2(p.x, p.y))
+					ch["uv2"].append(Vector2.ZERO)
 					ch["n"].append(Vector3.UP)
 					ch["c"].append(rc)
 		if bi % 400 == 0:
@@ -522,6 +547,7 @@ func _build_buildings() -> void:
 		arrays[Mesh.ARRAY_NORMAL] = ch["n"]
 		arrays[Mesh.ARRAY_COLOR] = ch["c"]
 		arrays[Mesh.ARRAY_TEX_UV] = ch["uv"]
+		arrays[Mesh.ARRAY_TEX_UV2] = ch["uv2"]
 		var mesh := ArrayMesh.new()
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		var mi := MeshInstance3D.new()
@@ -545,38 +571,52 @@ func _build_buildings() -> void:
 			await get_tree().process_frame
 
 
-## Toit à deux pentes (faîtage dans le sens de la longueur) + pignons.
+## Toit à deux pentes (pignons) ou à quatre pentes, avec débord de toiture.
 func _gable_roof(ch: Dictionary, poly: PackedVector2Array, h: float, rc: Color, wc: Color, seed_v: int) -> void:
 	var p := poly
-	# Le faîtage relie les milieux des petits côtés.
 	if p[0].distance_to(p[1]) < p[1].distance_to(p[2]):
 		p = PackedVector2Array([poly[1], poly[2], poly[3], poly[0]])
+	var c2 := (p[0] + p[1] + p[2] + p[3]) * 0.25
 	var short_len := p[1].distance_to(p[2])
-	var rise := clampf(short_len * (0.18 + 0.08 * (seed_v % 3)), 0.5, 1.8)
+	var long_len := p[0].distance_to(p[1])
+	var hip := (seed_v % 3) != 0 and long_len > short_len * 1.05
+	var rise := clampf(short_len * (0.22 + 0.06 * (seed_v % 3)), 0.8, 2.6)
+	var W := func(v: Vector2, y: float) -> Vector3: return to_world(v.x, v.y, y)
+	var center: Vector3 = W.call(c2, h)
+	# Débord : on élargit le contour du toit de 0,5 m.
+	var e2: Array[Vector2] = []
+	for v in p:
+		e2.append(v + (v - c2).normalized() * 0.7)
+	var e := [W.call(e2[0], h - 0.15), W.call(e2[1], h - 0.15), W.call(e2[2], h - 0.15), W.call(e2[3], h - 0.15)]
+	var axis := (p[1] - p[0]).normalized()
 	var ra := (p[3] + p[0]) * 0.5
 	var rb := (p[1] + p[2]) * 0.5
-	var c2 := (p[0] + p[1] + p[2] + p[3]) * 0.25
-	var W := func(v: Vector2, y: float) -> Vector3: return to_world(v.x, v.y, y)
+	if hip:
+		ra += axis * short_len * 0.5
+		rb -= axis * short_len * 0.5
 	var top_a: Vector3 = W.call(ra, h + rise)
 	var top_b: Vector3 = W.call(rb, h + rise)
-	var e := [W.call(p[0], h), W.call(p[1], h), W.call(p[2], h), W.call(p[3], h)]
-	var center: Vector3 = W.call(c2, h)
-	# Pans de toiture.
-	_tri(ch, e[0], e[1], top_b, center, rc, true)
-	_tri(ch, e[0], top_b, top_a, center, rc, true)
-	_tri(ch, e[2], e[3], top_a, center, rc, true)
-	_tri(ch, e[2], top_a, top_b, center, rc, true)
-	# Pignons (même couleur que les murs).
-	_tri(ch, e[1], e[2], top_b, center, Color(wc.r, wc.g, wc.b, 1.0), false)
-	_tri(ch, e[3], e[0], top_a, center, Color(wc.r, wc.g, wc.b, 1.0), false)
+	var faces := [[e[0], e[1], top_b], [e[0], top_b, top_a], [e[2], e[3], top_a], [e[2], top_a, top_b]]
+	if hip:
+		faces += [[e[1], e[2], top_b], [e[3], e[0], top_a]]
+	for f in faces:
+		_tri(ch, f[0], f[1], f[2], center, rc, true)
+		_tri(ch, f[0], f[2], f[1], center + Vector3(0, 50, 0), Color(0.85, 0.83, 0.78, 0.5), false, true)  # sous-face du débord
+	if not hip:
+		# Pignons (couleur des murs).
+		var g := [W.call(p[1], h), W.call(p[2], h), W.call(rb, h + rise), W.call(p[3], h), W.call(p[0], h), W.call(ra, h + rise)]
+		_tri(ch, g[0], g[1], g[2], center, Color(wc.r, wc.g, wc.b, 1.0), false)
+		_tri(ch, g[3], g[4], g[5], center, Color(wc.r, wc.g, wc.b, 1.0), false)
 
 
 ## Ajoute un triangle orienté vers l'extérieur (sens horaire vu de l'extérieur).
-func _tri(ch: Dictionary, a: Vector3, b: Vector3, c: Vector3, inside: Vector3, col: Color, roof: bool) -> void:
+func _tri(ch: Dictionary, a: Vector3, b: Vector3, c: Vector3, inside: Vector3, col: Color, roof: bool, under := false) -> void:
 	var n := (b - a).cross(c - a)
 	var out_dir := (a + b + c) / 3.0 - inside
 	if roof:
 		out_dir = Vector3.UP + out_dir * 0.01
+	if under:
+		out_dir = Vector3.DOWN
 	if n.dot(out_dir) > 0.0:
 		var t := b
 		b = c
@@ -587,6 +627,7 @@ func _tri(ch: Dictionary, a: Vector3, b: Vector3, c: Vector3, inside: Vector3, c
 		ch["v"].append(v)
 		ch["n"].append(normal)
 		ch["c"].append(col)
+		ch["uv2"].append(Vector2.ZERO)
 		if roof:
 			ch["uv"].append(Vector2(v.x, v.z))
 		else:

@@ -83,4 +83,35 @@ const MISSIONS := [
 			 "text": "Arrivée : Tour de l'Échangeur", "done": "Champion ! Ozali makasi ! (Tu es fort !)"},
 		],
 	},
+	# ---------------- Centre-ville : Kasa-Vubu / Lingwala ----------------
+	{
+		"id": "c1_cinquantenaire", "zone": "centre",
+		"title": "Visite au Cinquantenaire",
+		"giver": "Mama Nzuzi", "giver_at": [48.0, -212.0],
+		"intro": "Mbote mwana ! Nazali na maladi mingi te, kasi... (Je ne suis pas très malade, mais...) Va chercher mes résultats d'analyses à l'accueil de l'Hôpital du Cinquantenaire, puis apporte-les à mon fils à la maison communale de Kasa-Vubu. Matondo !",
+		"reward": 8000,
+		"steps": [
+			{"at": [41.0, -110.0], "label": "Hôpital du Cinquantenaire — accueil", "radius": 22.0,
+			 "text": "Va à l'accueil de l'Hôpital du Cinquantenaire",
+			 "done": "Résultats récupérés. Tout va bien pour Mama Nzuzi !"},
+			{"poi": "w341027474", "label": "Maison communale de Kasa-Vubu", "radius": 22.0, "timer": 300.0,
+			 "text": "Apporte les résultats à la maison communale de Kasa-Vubu",
+			 "done": "Malamu mingi ! (Très bien !) Son fils est rassuré."},
+		],
+	},
+	{
+		"id": "c2_match", "zone": "centre",
+		"title": "Le grand match au Stade des Martyrs",
+		"giver": "Supporter Didi", "giver_at": [700.0, 900.0],
+		"intro": "Ndeko ! Ce soir, grand match au Stade des Martyrs ! Passe devant le Palais du Peuple, puis va acheter ton billet au stade (1 500 FC). Mbangu, ekoki kotonda ! (Vite, ça va être plein !)",
+		"reward": 12000,
+		"steps": [
+			{"at": [753.0, 960.0], "label": "Palais du Peuple", "radius": 30.0,
+			 "text": "Passe devant le Palais du Peuple",
+			 "done": "Le Palais du Peuple, siège du Parlement."},
+			{"at": [1557.0, 1090.0], "label": "Stade des Martyrs — guichets", "radius": 40.0, "cost": 1500, "timer": 240.0,
+			 "text": "Achète ton billet aux guichets du Stade des Martyrs (1 500 FC)",
+			 "done": "Billet acheté ! Allez les Léopards !"},
+		],
+	},
 ]

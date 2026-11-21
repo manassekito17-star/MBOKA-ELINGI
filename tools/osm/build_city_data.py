@@ -20,7 +20,8 @@ Données : © les contributeurs d'OpenStreetMap (ODbL 1.0) ;
           © Overture Maps Foundation ; Google Open Buildings (CC BY 4.0 / ODbL).
 
 Usage :
-  python3 tools/osm/build_city_data.py <extrait.osm> <sortie.json> [--extra overture.geojson] [--fill]
+  python3 tools/osm/build_city_data.py <extrait.osm> <sortie.json> [--zone tools/osm/zones/x.json]
+                                       [--extra overture.geojson] [--fill]
 Nécessite : pip install shapely (pour --extra et --fill)
 """
 import json
@@ -30,7 +31,7 @@ import sys
 import xml.etree.ElementTree as ET
 import zlib
 
-ORIGIN_LAT = -4.374384
+ORIGIN_LAT = -4.374384     # remplacé par la configuration de zone (--zone)
 ORIGIN_LON = 15.345467
 M_PER_DEG = 111_320.0
 SKIP_BUILDINGS = {"57890331"}   # esplanade de la Tour de l'Échangeur (modélisée à part)
@@ -124,7 +125,14 @@ def make_building(bid, ring, tags, src):
     }
 
 
-def main(src, dst, extra=None, fill=False):
+def main(src, dst, extra=None, fill=False, zone=None):
+    global ORIGIN_LAT, ORIGIN_LON, SKIP_BUILDINGS
+    zone = zone or {}
+    if zone.get("origin"):
+        ORIGIN_LAT, ORIGIN_LON = zone["origin"]
+    if "skip_ways" in zone:
+        SKIP_BUILDINGS = set(zone["skip_ways"])
+    clear_circles = zone.get("clear", [[0, 0, ESPLANADE_RADIUS]])
     root = ET.parse(src).getroot()
     nodes, pois, trees = {}, [], []
     for n in root.iter("node"):
@@ -209,6 +217,31 @@ def main(src, dst, extra=None, fill=False):
                 pois.append({"id": "w" + wid, "name": tags["name"], "cat": tags.get("amenity", tags.get("landuse")),
                              "x": round(cx, 1), "y": round(cy, 1)})
 
+    # Formes de monuments (stade, palais...) demandées par la zone.
+    shapes = {}
+    ways_by_id = {w.get("id"): w for w in root.iter("way")}
+    rels_by_id = {r.get("id"): r for r in root.iter("relation")}
+    for key, ref in zone.get("shapes", {}).items():
+        kind, oid = ref.split(":")
+        way_ids = [oid] if kind == "way" else [m.get("ref") for m in rels_by_id.get(oid, []) if m.tag == "member"
+                                                and m.get("type") == "way" and m.get("role") in ("outer", "")]
+        ring = []
+        for wid2 in way_ids:
+            w2 = ways_by_id.get(wid2)
+            if w2 is None:
+                continue
+            pts2 = [nodes[nd.get("ref")] for nd in w2.iter("nd") if nd.get("ref") in nodes]
+            if ring and pts2 and ring[-1] != pts2[0] and ring[-1] == pts2[-1]:
+                pts2 = pts2[::-1]
+            ring += pts2 if not ring else pts2[1:]
+        if len(ring) >= 3:
+            if ring[0] == ring[-1]:
+                ring = ring[:-1]
+            shapes[key] = [c for p in ccw(ring) for c in p]
+            # Les monuments modélisés à la main ne reçoivent pas de maisons.
+            if key != "hopital_site":
+                open_areas.append(ccw(ring))
+
     b = root.find("bounds")
     bx0, by0 = project(float(b.get("minlat")), float(b.get("minlon")))
     bx1, by1 = project(float(b.get("maxlat")), float(b.get("maxlon")))
@@ -236,7 +269,8 @@ def main(src, dst, extra=None, fill=False):
                 if len(ring) < 3:
                     continue
                 pg = Polygon(ring).buffer(0)
-                if pg.area < 8 or math.hypot(pg.centroid.x, pg.centroid.y) < ESPLANADE_RADIUS:
+                if pg.area < 8 or any(math.hypot(pg.centroid.x - cx0, pg.centroid.y - cy0) < rad
+                                      for cx0, cy0, rad in clear_circles):
                     continue
                 if any(pg.intersection(ex_geoms[i]).area > 0.3 * pg.area for i in existing.query(pg)):
                     continue
@@ -259,7 +293,16 @@ def main(src, dst, extra=None, fill=False):
         obstacles = [line.buffer(r["w"] / 2 + 1.5) for line, r in road_geoms]
         obstacles += [poly_of(bd).buffer(1.2) for bd in buildings]
         obstacles += [Polygon([(g["p"][i], g["p"][i + 1]) for i in range(0, len(g["p"]), 2)]).buffer(0) for g in greens + water]
-        obstacles.append(Point(0, 0).buffer(ESPLANADE_RADIUS))
+        for cx0, cy0, rad in clear_circles:
+            obstacles.append(Point(cx0, cy0).buffer(rad))
+        # Grandes emprises (hôpital, écoles, zones industrielles...) : pas de maison générée.
+        for r_ in open_areas:
+            if len(r_) >= 3:
+                obstacles.append(Polygon(r_).buffer(0))
+        for key, flat in shapes.items():
+            if key != "hopital_site":
+                obstacles.append(Polygon([(flat[i], flat[i + 1]) for i in range(0, len(flat), 2)]).buffer(
+                    zone.get("monument_clearance", {}).get(key, 3)))
         tree_idx = STRtree(obstacles)
         area_box = box(bx0 + 5, by0 + 5, bx1 - 5, by1 - 5)
 
@@ -379,8 +422,78 @@ def main(src, dst, extra=None, fill=False):
                 footbridges.append({"a": [round(v, 1) for v in ca], "b": [round(v, 1) for v in cb]})
                 used.update((i, j))
 
+    # Façade principale : le mur qui regarde la rue la plus proche ("fe" = index
+    # du côté), pour y placer la porte d'entrée et le garage.
+    try:
+        from shapely.geometry import LineString as _L, Point as _Q
+        from shapely.strtree import STRtree as _T
+        rl = [_L([(r["p"][i], r["p"][i + 1]) for i in range(0, len(r["p"]), 2)])
+              for r in roads if r["t"] not in ("footway", "path", "steps")]
+        rt = _T(rl)
+        for bd in buildings:
+            p = bd["p"]
+            n = len(p) // 2
+            if n > 12:
+                continue
+            best, best_d = 0, 1e9
+            for i in range(n):
+                ax, ay = p[2 * i], p[2 * i + 1]
+                bx, by = p[(2 * i + 2) % (2 * n)], p[(2 * i + 3) % (2 * n)]
+                length = math.hypot(bx - ax, by - ay)
+                if length < 2.5:
+                    continue
+                # Normale extérieure (polygone anti-horaire) : (dy, -dx).
+                nx, ny = (by - ay) / length, -(bx - ax) / length
+                q = _Q((ax + bx) / 2 + nx * 2.0, (ay + by) / 2 + ny * 2.0)
+                d = rl[rt.nearest(q)].distance(q)
+                if d < best_d:
+                    best, best_d = i, d
+            if best_d < 60:
+                bd["fe"] = best
+    except ImportError:
+        pass
+
+    # Pas de bâtiment sur l'emprise d'un monument modélisé à la main.
+    if shapes:
+        from shapely.geometry import Polygon as _P0, Point as _Pt
+        # Dégagement autour des monuments (parvis, parkings) : réglable par zone.
+        clr = zone.get("monument_clearance", {})
+        mon = [_P0([(f[i], f[i + 1]) for i in range(0, len(f), 2)]).buffer(clr.get(k, 2)) for k, f in shapes.items() if k != "hopital_site"]
+        def _c(bd):
+            p = bd["p"]
+            n = len(p) // 2
+            return _Pt(sum(p[0::2]) / n, sum(p[1::2]) / n)
+        buildings = [bd for bd in buildings if not any(m.contains(_c(bd)) for m in mon)]
+
+    # Réglages manuels (hauteurs, couleurs) pour les bâtiments d'un site connu.
+    if zone.get("overrides"):
+        from shapely.geometry import Polygon as _P
+        for ov in zone["overrides"]:
+            flat = shapes.get(ov["within"])
+            if not flat:
+                continue
+            site = _P([(flat[i], flat[i + 1]) for i in range(0, len(flat), 2)])
+            for bd in buildings:
+                p = bd["p"]
+                pg = _P([(p[i], p[i + 1]) for i in range(0, len(p), 2)])
+                if not site.contains(pg.centroid):
+                    continue
+                for rule in ov["rules"]:
+                    if pg.area >= rule["min_area"]:
+                        bd["h"] = round(rule["levels"] * 3.4 + 0.8, 1)
+                        bd["wc"] = rule["wall"]
+                        if rule.get("flat"):
+                            bd["rf"] = 1
+                        if rule.get("tag"):
+                            bd["tag"] = rule["tag"]
+                        if rule.get("style"):
+                            bd["st"] = rule["style"]
+                        break
+
     out = {
-        "name": "Limete — Échangeur, Kinshasa",
+        "id": zone.get("id", "limete"),
+        "shapes": shapes,
+        "name": zone.get("name", "Limete — Échangeur, Kinshasa"),
         "attribution": "© les contributeurs d'OpenStreetMap (ODbL 1.0) ; © Overture Maps Foundation ; Google Open Buildings",
         "origin": {"lat": ORIGIN_LAT, "lon": ORIGIN_LON},
         "bounds": [bx0, by0, bx1, by1],
@@ -400,10 +513,14 @@ def main(src, dst, extra=None, fill=False):
 
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    extra = None
+    extra = zone = None
     if "--extra" in sys.argv:
         extra = sys.argv[sys.argv.index("--extra") + 1]
         args.remove(extra)
+    if "--zone" in sys.argv:
+        zpath = sys.argv[sys.argv.index("--zone") + 1]
+        args.remove(zpath)
+        zone = json.load(open(zpath, encoding="utf-8"))
     if len(args) != 2:
         sys.exit(__doc__)
-    main(args[0], args[1], extra=extra, fill="--fill" in sys.argv)
+    main(args[0], args[1], extra=extra, fill="--fill" in sys.argv, zone=zone)

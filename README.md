@@ -2,13 +2,23 @@
 
 *« Le beau pays » en lingala.* Jeu de simulation de vie en monde ouvert, à **Kinshasa**.
 
-**Version 0.2.0 (alpha)**. Zone : **Limete, de l'Échangeur à la 7e rue** (environ 3 × 4,5 km), reproduite à partir de la **vraie carte** (OpenStreetMap, complétée par les bâtiments détectés par satellite).
+**Version 0.3.0 (alpha)**. Deux zones de Kinshasa reliées en taxi : **Limete / Échangeur** et le **centre-ville (Kasa-Vubu / Lingwala)**. Zone : **Limete, de l'Échangeur à la 7e rue** (environ 3 × 4,5 km), reproduite à partir de la **vraie carte** (OpenStreetMap, complétée par les bâtiments détectés par satellite).
 
 | | |
 |---|---|
 | Moteur | Godot 4.7.2 (rendu « Compatibility », OpenGL), choisi pour fonctionner sur PC modestes et smartphones |
 | Plateformes | Windows (installateur `.exe`), Android (`.apk`). iOS : plus tard, un Mac est nécessaire |
 | Langues du jeu | Français et lingala |
+
+## Nouveautés de la version 0.3
+
+- **Centre-ville** (Kasa-Vubu / Lingwala, environ 3,5 × 3 km, plus de 34 000 bâtiments) avec, reproduits d'après photos :
+  - l'**Hôpital du Cinquantenaire** : blocs blancs à hublots rouges, ailes en brique rouge, portail à marquise, lettres dorées, croix rouge, parvis, verrière, ambulances ;
+  - le **Stade des Martyrs** : façade blanche à nervures, bannières rouges, gradins bleus, jaunes et rouges, pelouse, piste, parvis ;
+  - le **Palais du Peuple** : pilastres, panneaux colorés, drapeaux de la RDC, esplanade.
+- **Voyage en taxi** entre les zones (MENU, 1 000 FC)
+- **Nouvelles maisons** : toits à 4 ou 2 pentes en tuiles ou ardoise avec débord, fenêtres à cadre blanc, porte et garage côté rue, murs clairs
+- 2 nouvelles missions au centre-ville
 
 ## Contenu de la version 0.2
 
@@ -69,7 +79,7 @@ docs/                 Documentation (feuille de route, architecture, sécurité)
    ```
    python tools/osm/fetch_osm.py 15.328 -4.385 15.356 -4.345 limete.osm 3
    python tools/osm/fetch_overture.py 15.328 -4.385 15.356 -4.345 overture.geojson
-   python tools/osm/build_city_data.py limete.osm game/data/limete_echangeur.json --extra overture.geojson --fill
+   python tools/osm/build_city_data.py limete.osm game/data/limete_echangeur.json --zone tools/osm/zones/limete.json --extra overture.geojson --fill
    ```
 
 ## Crédits et licences
