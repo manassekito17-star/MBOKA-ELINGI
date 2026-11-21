@@ -71,3 +71,5 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0c0d10; col
 .panneau .reel { color: #7ee07e; } .panneau .simule { color: #f0b35a; }
 .panneau .actions { margin-top: 12px; text-align: right; }
 @media (max-width: 700px) { #hud-trafic { top: auto; bottom: 175px; font-size: 11px; } }
+.panneau .zones { display: grid; gap: 8px; }
+.panneau .zones button { text-align: left; line-height: 1.35; }

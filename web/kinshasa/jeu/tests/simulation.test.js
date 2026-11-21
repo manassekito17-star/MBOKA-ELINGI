@@ -2,7 +2,7 @@
 // A : bus, arrêt, montée, départ        B : moto-taxi, prise en charge, dépose
 // C : carrefour à feux, 30 véhicules     D : bouchon derrière un bus arrêté
 // F : piétons sur un passage piéton      G : heures de pointe / heures creuses
-// H : accident simulé (voie bloquée)
+// H : accident simulé (voie bloquée)     I : zone de la Gombe (réseau réel, lignes, feux)
 // (Le scénario E — joueur qui marche, court, conduit — est testé dans le navigateur :
 //  tests/e2e_navigateur.cjs.)
 import { test } from "node:test";
@@ -216,4 +216,31 @@ test("Scénario H : un accident simulé bloque une voie, la circulation s'adapte
   for (let t = 0; t < 60; t++) sim.pas(1);
   assert.ok(evts(sim, "fin_accident").some((e) => e.v === v.id), "l'accident est dégagé");
   assert.equal(sansCollision(sim), null);
+});
+
+// I : zone de la Gombe (réseau réel bien plus grand, lignes réelles dont une en boucle, feux réels OSM).
+test("Scénario I : la Gombe — lignes réelles, feux réels, circulation fluide sans blocage", () => {
+  const G = new URL("../zones/gombe/", import.meta.url);
+  const lireG = (f) => JSON.parse(fs.readFileSync(new URL(f, G)));
+  const reseau = lireG("reseau.json"), transports = lireG("transports.json");
+  const sim = new Circulation(reseau, transports, { heure: 8, niveau: 1, graine: 5 });
+  // Toutes les lignes réelles d'OpenStreetMap sont créées, y compris la 06B (tracé en boucle).
+  assert.deepEqual(sim.lignes.map((l) => l.ref).sort(), transports.lignes.map((l) => l.ref).sort());
+  assert.ok(sim.statistiques().feuxReels >= 1, "au moins un carrefour à feux réel (OSM)");
+  sim.definirJoueur(1300, -1150, false);
+  const bus = () => sim.vehicules.filter((v) => v.role === "ligne");
+  let positions = new Map();
+  for (let m = 1; m <= 12; m++) {
+    for (let i = 0; i < 60; i++) sim.pas(1);
+    assert.equal(sansCollision(sim), null);
+    if (m === 7) positions = new Map(bus().map((v) => [v.id, [v.x, v.z]]));
+  }
+  // Sur les 5 dernières minutes, chaque bus de ligne a avancé (aucun bus bloqué).
+  for (const v of bus()) {
+    const p = positions.get(v.id);
+    if (p) assert.ok(Math.hypot(v.x - p[0], v.z - p[1]) > 30, `bus ${v.id} (${v.ligne}) immobile`);
+  }
+  const st = sim.statistiques();
+  assert.ok(st.vehicules > 250, `véhicules : ${st.vehicules}`);
+  assert.ok(st.vitesseAxes > 3, `vitesse sur les axes : ${(st.vitesseAxes * 3.6).toFixed(0)} km/h`);
 });

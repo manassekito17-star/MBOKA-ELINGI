@@ -18,19 +18,20 @@ export class Physique {
   }
 
   /** Terrain : grille de hauteurs n×n (Float32), côté `taille` m, centrée sur l'origine. */
-  ajouterRelief(h, n, taille) {
+  /** Sol en maillage : grille n (est-ouest) × nz (nord-sud), largeur `taille` en x. */
+  ajouterRelief(h, n, taille, nz = n) {
     const pas = taille / (n - 1);
-    const demi = taille / 2;
-    const v = new Float32Array(n * n * 3);
-    for (let j = 0; j < n; j++) {
+    const demi = taille / 2, demiZ = ((nz - 1) * pas) / 2;
+    const v = new Float32Array(n * nz * 3);
+    for (let j = 0; j < nz; j++) {
       for (let i = 0; i < n; i++) {
         const k = (j * n + i) * 3;
-        v[k] = -demi + i * pas; v[k + 1] = h[j * n + i] - 0.05; v[k + 2] = -demi + j * pas;
+        v[k] = -demi + i * pas; v[k + 1] = h[j * n + i] - 0.05; v[k + 2] = -demiZ + j * pas;
       }
     }
-    const idx = new Uint32Array((n - 1) * (n - 1) * 6);
+    const idx = new Uint32Array((n - 1) * (nz - 1) * 6);
     let k = 0;
-    for (let j = 0; j < n - 1; j++) {
+    for (let j = 0; j < nz - 1; j++) {
       for (let i = 0; i < n - 1; i++) {
         const a = j * n + i, b = a + 1, c = a + n, d = c + 1;
         idx.set([a, c, b, b, c, d], k);

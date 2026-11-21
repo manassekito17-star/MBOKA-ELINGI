@@ -16,12 +16,14 @@ la carte n'en a pas.
 
 Usage :
   python3 tools/jumeau/extraire_transports.py web/kinshasa/jeu/zones/limete
+  python3 tools/jumeau/extraire_transports.py web/kinshasa/jeu/zones/gombe
 """
 import json
 import math
 import os
 import sys
 import time
+import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 
@@ -32,31 +34,42 @@ M_LAT = 111_320.0
 
 
 def api(chemin):
+    """Requête à l'API OSM, avec attente et nouvel essai si le serveur demande de ralentir (429/509)."""
     req = urllib.request.Request("https://api.openstreetmap.org/api/0.6/" + chemin,
                                  headers={"User-Agent": "MbokaElengi-map-tool/0.3"})
-    with urllib.request.urlopen(req, timeout=300) as r:
-        return ET.fromstring(r.read())
+    for essai in range(8):
+        try:
+            with urllib.request.urlopen(req, timeout=300) as r:
+                return ET.fromstring(r.read())
+        except urllib.error.HTTPError as e:
+            if e.code not in (429, 509, 503) or essai == 7:
+                raise
+            attente = int(e.headers.get("Retry-After") or 0) or 30 * (essai + 1)
+            print(f"  API OSM : {e.code}, nouvel essai dans {attente} s")
+            time.sleep(attente)
 
 
 def main(dossier):
     man = json.load(open(os.path.join(dossier, "manifest.json"), encoding="utf-8"))
     lat0, lon0 = man["origine"]
-    demi = man["demi"]
+    dx_m = man.get("demi_x", man["demi"])
+    dz_m = man.get("demi_z", man["demi"])
     m_lon = M_LAT * math.cos(math.radians(lat0))
 
     def xz(lat, lon):
         return (lon - lon0) * m_lon, -(lat - lat0) * M_LAT
 
-    dlon, dlat = demi / m_lon, demi / M_LAT
+    dlon, dlat = dx_m / m_lon, dz_m / M_LAT
     W, E, S, N = lon0 - dlon, lon0 + dlon, lat0 - dlat, lat0 + dlat
-    zone = box(-demi, -demi, demi, demi)
+    zone = box(-dx_m, -dz_m, dx_m, dz_m)
 
-    # 1. Points d'intérêt transport de la zone (3 × 3 requêtes pour respecter la limite de l'API).
+    # 1. Points d'intérêt transport : petites requêtes (~1,1 km) pour respecter la limite de l'API.
+    ni, nj = max(3, math.ceil(2 * dx_m / 1100)), max(3, math.ceil(2 * dz_m / 1100))
     noeuds, relations = {}, {}
-    for i in range(3):
-        for j in range(3):
-            w, e = W + (E - W) * i / 3, W + (E - W) * (i + 1) / 3
-            s, n = S + (N - S) * j / 3, S + (N - S) * (j + 1) / 3
+    for i in range(ni):
+        for j in range(nj):
+            w, e = W + (E - W) * i / ni, W + (E - W) * (i + 1) / ni
+            s, n = S + (N - S) * j / nj, S + (N - S) * (j + 1) / nj
             root = api(f"map?bbox={w:.6f},{s:.6f},{e:.6f},{n:.6f}")
             for nd in root.iter("node"):
                 t = {x.get("k"): x.get("v") for x in nd.iter("tag")}
@@ -66,7 +79,7 @@ def main(dossier):
                 t = {x.get("k"): x.get("v") for x in rl.iter("tag")}
                 if t.get("route") == "bus":
                     relations[rl.get("id")] = t
-            time.sleep(1)
+            time.sleep(3)
 
     arrets, passages, feux, gares = [], [], [], []
     for nid, (lat, lon, t) in noeuds.items():
@@ -108,7 +121,7 @@ def main(dossier):
             "trace": [round(v, 1) for xy in principal.coords for v in xy],
             "longueur_m": round(principal.length), "arrets": [a["id"] for a in arrets_ligne],
         })
-        time.sleep(1)
+        time.sleep(3)
 
     out = {"source": "OpenStreetMap (ODbL) — récupéré le " + time.strftime("%Y-%m-%d"),
            "lignes": lignes, "arrets": arrets, "passages": passages, "feux": feux, "gares": gares}

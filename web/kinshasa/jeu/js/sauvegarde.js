@@ -1,15 +1,24 @@
 // Sauvegarde locale (navigateur) : position, véhicule, véhicules stationnés,
 // heure, météo, argent. Lecture défensive : une sauvegarde abîmée est ignorée.
 const CLE = "kinshasa3d.sauvegarde.v1";
+const CLE_ZONE = "kinshasa3d.zone.v1";
+// Une sauvegarde par zone (la clé d'origine reste celle de Limete).
+const cle = (zone) => (zone && zone !== "limete" ? `${CLE}.${zone}` : CLE);
 
-export function charger() {
+/** Dernière zone jouée (ou null). */
+export function derniereZone() {
+  try { return localStorage.getItem(CLE_ZONE); } catch { return null; }
+}
+
+export function charger(zone = "limete") {
   try {
-    const d = JSON.parse(localStorage.getItem(CLE) || "null");
+    const d = JSON.parse(localStorage.getItem(cle(zone)) || "null");
     if (!d || typeof d !== "object" || d.v !== 1) return null;
     const nombre = (x, def) => (Number.isFinite(x) ? x : def);
     return {
       v: 1,
       zone: typeof d.zone === "string" ? d.zone : "limete",
+      niveau: [0, 1, 2].includes(d.niveau) ? d.niveau : 1,
       joueur: { x: nombre(d.joueur?.x, 0), y: nombre(d.joueur?.y, 0), z: nombre(d.joueur?.z, 0) },
       conduit: Number.isInteger(d.conduit) ? d.conduit : -1,
       vehicules: Array.isArray(d.vehicules) ? d.vehicules.filter((v) => v && typeof v.type === "string").slice(0, 40) : [],
@@ -24,13 +33,14 @@ export function charger() {
 
 export function enregistrer(etat) {
   try {
-    localStorage.setItem(CLE, JSON.stringify({ v: 1, ...etat }));
+    localStorage.setItem(cle(etat.zone), JSON.stringify({ v: 1, ...etat }));
+    localStorage.setItem(CLE_ZONE, etat.zone);
     return true;
   } catch {
     return false;
   }
 }
 
-export function effacer() {
-  try { localStorage.removeItem(CLE); } catch { /* stockage indisponible */ }
+export function effacer(zone = "limete") {
+  try { localStorage.removeItem(cle(zone)); } catch { /* stockage indisponible */ }
 }

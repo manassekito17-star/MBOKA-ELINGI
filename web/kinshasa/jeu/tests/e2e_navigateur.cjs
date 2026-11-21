@@ -90,6 +90,27 @@ const assert = require("node:assert/strict");
   await page.keyboard.press("KeyP"); await page.waitForTimeout(300);
   verifier("sauvegarde écrite", await page.evaluate(() => !!localStorage.getItem("kinshasa3d.sauvegarde.v1")));
 
+  // 9. Deuxième zone : la Gombe (zone rectangulaire, lignes réelles 02, 06B, 11).
+  await page.goto(base + "/jeu/?zone=gombe&nouveau=1&qualite=basse");
+  await page.waitForFunction(() => window.__jeu, null, { timeout: 120000 });
+  await page.waitForTimeout(5000);
+  const g = await page.evaluate(() => ({ titre: document.title, lignes: window.__jeu.sim.lignes.map((l) => l.ref) }));
+  const eg = await etat();
+  verifier("Gombe : zone chargée", g.titre.includes("Gombe") && eg.tuiles >= 9);
+  verifier("Gombe : lignes réelles 02, 06B et 11", ["02", "06B", "11"].every((r) => g.lignes.includes(r)));
+  verifier("Gombe : circulation affichée autour du joueur", eg.trafic > 50 && eg.rendus > 0 && eg.pietonsRendus > 0);
+  await page.keyboard.down("KeyW"); await page.waitForTimeout(3000); await page.keyboard.up("KeyW");
+  const eg2 = await etat();
+  verifier("Gombe : le joueur marche", Math.hypot(eg2.x - eg.x, eg2.z - eg.z) > 1);
+  await page.keyboard.press("KeyP"); await page.waitForTimeout(300);
+  verifier("Gombe : sauvegarde séparée de celle de Limete", await page.evaluate(() =>
+    !!localStorage.getItem("kinshasa3d.sauvegarde.v1.gombe") && JSON.parse(localStorage.getItem("kinshasa3d.sauvegarde.v1")).zone === "limete"));
+  // 10. Changer de zone depuis le jeu.
+  await page.click("#btn-zone");
+  await Promise.all([page.waitForNavigation(), page.click('[data-zone="limete"]')]);
+  await page.waitForFunction(() => window.__jeu, null, { timeout: 120000 });
+  verifier("changement de zone : retour à Limete", (await page.title()).includes("Limete"));
+
   verifier("aucune erreur JavaScript", erreurs.length === 0);
   await navigateur.close();
   console.log("Tous les tests navigateur sont passés.");

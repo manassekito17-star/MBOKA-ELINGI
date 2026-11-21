@@ -15,13 +15,15 @@ import { tourEchangeur } from "./monuments.js";
 import { Projection, Trajet } from "./geo.js";
 import { Circulation, NIVEAUX, profilHoraire } from "./simulation/circulation.js";
 import { RenduCirculation } from "./simulation/rendu.js";
-import { editeurPersonnage, panneauTransports, chargerApparence } from "./interface.js";
+import { editeurPersonnage, panneauTransports, panneauZones, chargerApparence } from "./interface.js";
 import * as Sauvegarde from "./sauvegarde.js";
+import { ZONES, ZONE_DEFAUT } from "./zones.js";
 
 const params = new URLSearchParams(location.search);
 const mobile = matchMedia("(pointer: coarse)").matches;
 const QUALITE = params.get("qualite") || (mobile ? "basse" : "moyenne");
-const ZONE = "limete";
+const ZONE = [params.get("zone"), params.has("lat") ? null : Sauvegarde.derniereZone(), ZONE_DEFAUT].find((z) => z && ZONES[z]);
+const CONFIG = ZONES[ZONE];
 const $ = (id) => document.getElementById(id);
 const CAMERAS_PIED = ["3e personne", "1re personne", "aérienne", "libre"];
 const CAMERAS_VEHICULE = ["poursuite", "intérieure", "aérienne"];
@@ -75,7 +77,9 @@ async function demarrer() {
     renderer.setSize(innerWidth, innerHeight);
   });
 
-  progression("Carte réelle de Limete…", 0.15);
+  $("chargement-zone").textContent = `Zone jouable : ${CONFIG.nom} (${CONFIG.description}, données réelles)`;
+  document.title = `Kinshasa 3D — ${CONFIG.court}`;
+  progression(`Carte réelle de ${CONFIG.court}…`, 0.15);
   const monde = new Monde(scene, physique, `zones/${ZONE}/`, QUALITE);
   const manifest = await monde.charger();
   const transports = await (await fetch(`zones/${ZONE}/transports.json`)).json().catch(() => null);
@@ -88,17 +92,17 @@ async function demarrer() {
   const env = new Environnement(scene, renderer, QUALITE);
   const audio = new Audio();
   const ctl = new Controles(renderer.domElement);
-  tourEchangeur(scene, physique, monde.hauteur(0, 0));
+  if (CONFIG.monument === "echangeur") tourEchangeur(scene, physique, monde.hauteur(0, 0));
 
   // --- Sauvegarde et point de départ.
-  const sauv = params.has("nouveau") ? null : Sauvegarde.charger();
+  const sauv = params.has("nouveau") ? null : Sauvegarde.charger(ZONE);
   if (sauv) { env.heure = sauv.heure; env.meteo = sauv.meteo; etat.argent = sauv.argent; }
-  let depart = { x: -38, z: -128 };
+  let depart = { ...CONFIG.depart };
   if (params.has("lat") && params.has("lon")) depart = proj.versLocal(+params.get("lon"), +params.get("lat"));
   else if (sauv) depart = sauv.joueur;
-  const lim = manifest.demi - 20;
-  depart.x = Math.max(-lim, Math.min(lim, depart.x));
-  depart.z = Math.max(-lim, Math.min(lim, depart.z));
+  const limX = (manifest.demi_x ?? manifest.demi) - 20, limZ = (manifest.demi_z ?? manifest.demi) - 20;
+  depart.x = Math.max(-limX, Math.min(limX, depart.x));
+  depart.z = Math.max(-limZ, Math.min(limZ, depart.z));
   const surRoute = pointRoute(monde.reseau, depart.x, depart.z, ["trunk", "primary", "secondary", "tertiary", "residential", "unclassified"]);
   const trottoir = surRoute.largeur / 2 + 2.2;
   if (!sauv || params.has("lat")) depart = { x: surRoute.x + surRoute.nx * trottoir, z: surRoute.z + surRoute.nz * trottoir };
@@ -106,9 +110,10 @@ async function demarrer() {
   // --- Simulation urbaine (circulation, bus, minibus, motos-taxis, piétons).
   progression("Simulation de la circulation…", 0.4);
   const lignesSimulees = [];
-  const lumumba = traceAxe(monde.reseau, "Boulevard Lumumba");
-  if (lumumba) lignesSimulees.push({ id: "sim_m1", ref: "M1", nom: "Minibus Boulevard Lumumba (ligne simulée)", type: "minibus",
-    depart: "Échangeur", terminus: "Nord de la zone", trace: lumumba, nbBus: 4, arrets: [] });
+  for (const l of CONFIG.lignesSimulees) {
+    const trace = traceAxe(monde.reseau, l.axe);
+    if (trace) lignesSimulees.push({ ...l, trace, arrets: [] });
+  }
   const sim = new Circulation(monde.reseau, transports, {
     heure: env.heure, niveau: sauv?.niveau ?? 1, busParLigne: 4, lignesSimulees,
     cibleVehicules: QUALITE === "basse" ? 200 : 300, ciblePietons: QUALITE === "basse" ? 160 : 260,
@@ -134,7 +139,8 @@ async function demarrer() {
     }
   } else {
     const route = new Trajet(surRoute.route.p);
-    let d = Math.max(0, surRoute.d - 30);
+    // Garés en file derrière le point de départ (le plus proche à ~10 m), pour ne pas boucher le passage.
+    let d = Math.max(0, surRoute.d - 70);
     for (const type of ["taxi", "voiture", "moto", "minibus", "camion", "bus"]) {
       const p = route.point(Math.min(route.longueur, d));
       const ang = Math.atan2(-p.dx, -p.dz);
@@ -147,9 +153,11 @@ async function demarrer() {
 
   // --- Panneaux.
   const editeur = editeurPersonnage($("panneau-perso"), (ap) => { joueur.changerApparence(ap); message("Personnage mis à jour."); });
-  const transportsUI = panneauTransports($("panneau-transports"), sim);
+  const transportsUI = panneauTransports($("panneau-transports"), sim, CONFIG.court);
   $("btn-perso").addEventListener("click", () => editeur.ouvrir());
   $("btn-bus").addEventListener("click", () => transportsUI.ouvrir());
+  const zonesUI = panneauZones($("panneau-zones"), ZONES, ZONE, () => sauvegarder(true));
+  $("btn-zone").addEventListener("click", () => zonesUI.ouvrir());
 
   // --- Véhicules du joueur : monter / descendre (F).
   function entrerSortir() {
@@ -393,7 +401,7 @@ async function demarrer() {
   const horloge = new THREE.Clock();
   let tMonde = 0, tSauve = 0, tHud = 0, images = 0, ips = 0, tIps = 0, pharesNuit = null;
   $("chargement").hidden = true;
-  message("Bienvenue à Limete ! Z/W Q/A S D : marcher · Maj : courir · Alt : marcher lentement · Ctrl : s'accroupir · F : vos véhicules · E : bus, moto-taxi, interagir · V : caméra · Échap : aide", 8);
+  message(`Bienvenue à ${CONFIG.court} ! Z/W Q/A S D : marcher · Maj : courir · Alt : marcher lentement · Ctrl : s'accroupir · F : vos véhicules · E : bus, moto-taxi, interagir · V : caméra · Échap : aide`, 8);
   const unGeste = () => { audio.demarrer(); removeEventListener("pointerdown", unGeste); removeEventListener("keydown", unGeste); };
   addEventListener("pointerdown", unGeste);
   addEventListener("keydown", unGeste);
@@ -422,6 +430,7 @@ async function demarrer() {
       if (ctl.appui("KeyP")) sauvegarder();
       if (ctl.appui("KeyB")) transportsUI.ouvrir();
       if (ctl.appui("KeyU")) editeur.ouvrir();
+      if (ctl.appui("KeyJ")) zonesUI.ouvrir();
       if (ctl.appui("KeyL") && etat.vehicule) etat.vehicule.allumerPhares(!etat.vehicule.phares);
       if (ctl.appui("KeyG")) { sim.niveau = (sim.niveau + 1) % 3; message(`Circulation : ${NIVEAUX[sim.niveau]} (simulée)`); }
       if (ctl.appui("KeyK")) {

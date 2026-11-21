@@ -181,18 +181,24 @@ document.getElementById("satellite").addEventListener("click", (e) => {
 });
 
 // --- Passage au mode jeu : uniquement dans les zones jouables déjà préparées ----
-const ZONES_JOUABLES = [{ id: "limete", nom: "Limete (Tour de l'Échangeur)", centre: [15.345467, -4.374384], demi: 1550 }];
+const ZONES_JOUABLES = [
+  { id: "limete", nom: "Limete (Tour de l'Échangeur)", centre: [15.345467, -4.374384], dx: 1550, dz: 1550 },
+  { id: "gombe", nom: "Gombe (centre-ville, boulevard du 30 Juin)", centre: [15.30485, -4.312], dx: 4550, dz: 1950 },
+];
 document.getElementById("jouer").addEventListener("click", () => {
   const c = carte.getCenter();
-  const z = ZONES_JOUABLES.find((z) => {
-    const dx = (c.lng - z.centre[0]) * 111320 * Math.cos((z.centre[1] * Math.PI) / 180);
-    const dy = (c.lat - z.centre[1]) * 111320;
-    return Math.abs(dx) < z.demi && Math.abs(dy) < z.demi;
+  const ecart = (z) => ({
+    x: (c.lng - z.centre[0]) * 111320 * Math.cos((z.centre[1] * Math.PI) / 180),
+    z: (c.lat - z.centre[1]) * 111320,
   });
+  const z = ZONES_JOUABLES.find((z) => { const e = ecart(z); return Math.abs(e.x) < z.dx && Math.abs(e.z) < z.dz; });
   if (z) {
-    location.href = `jeu/?lat=${c.lat.toFixed(6)}&lon=${c.lng.toFixed(6)}`;
-  } else if (confirm(`Le mode jeu n'est disponible que dans la zone pilote : ${ZONES_JOUABLES.map((z) => z.nom).join(", ")}.\n\nY aller ?`)) {
-    carte.flyTo({ center: ZONES_JOUABLES[0].centre, zoom: 16, pitch: 60, duration: 2500 });
+    location.href = `jeu/?zone=${z.id}&lat=${c.lat.toFixed(6)}&lon=${c.lng.toFixed(6)}`;
+    return;
+  }
+  const proche = ZONES_JOUABLES.slice().sort((a, b) => Math.hypot(ecart(a).x, ecart(a).z) - Math.hypot(ecart(b).x, ecart(b).z))[0];
+  if (confirm(`Le mode jeu n'est disponible que dans ces zones : ${ZONES_JOUABLES.map((z) => z.nom).join(" ; ")}.\n\nAller à la plus proche : ${proche.nom} ?`)) {
+    carte.flyTo({ center: proche.centre, zoom: 16, pitch: 60, duration: 2500 });
   }
 });
 

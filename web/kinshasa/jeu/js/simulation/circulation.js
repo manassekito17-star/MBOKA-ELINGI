@@ -85,7 +85,7 @@ export class Circulation {
     this.bloques = new Set();                   // arcs entièrement bloqués (accident)
     this.joueur = null;
     this.nid = 1;
-    this._feux();
+    this._feux(transports?.feux || []);
     this._grappes();
     this._passages(transports?.passages || []);
     this.arretsReels = transports?.arrets || [];
@@ -94,21 +94,37 @@ export class Circulation {
   }
 
   // ------------------------------------------------------------------ feux
-  _feux() {
+  /**
+   * Feux tricolores. RÉELS : carrefours où OpenStreetMap cartographie un feu
+   * (highway=traffic_signals). SIMULÉS : croisements de grands axes sans feu cartographié.
+   */
+  _feux(reels = []) {
     const R = this.R;
     this.controleurs = [];
+    const carrefourReel = new Set();
+    for (const f of reels) {
+      let best = null, dmin = 35;
+      for (const n of R.noeuds) {
+        if (!n.carrefour || n.entrants.length < 2) continue;
+        const d = Math.hypot(n.x - f.x, n.z - f.z);
+        if (d < dmin) { dmin = d; best = n; }
+      }
+      if (best) carrefourReel.add(best.id);
+    }
     const eligible = R.noeuds.filter((n) => {
       if (!n.carrefour) return false;
+      if (carrefourReel.has(n.id)) return true;
       const ent = n.entrants.map((e) => R.arcs[e]);
       return ent.filter((a) => a.rang >= 3).length >= 2 && new Set(ent.filter((a) => a.rang >= 2).map((a) => a.nom || a.id)).size >= 2;
     });
     for (const n of eligible) {
       let c = this.controleurs.find((c) => Math.hypot(c.x - n.x, c.z - n.z) < 40);
       if (!c) {
-        const a0 = R.arcs[n.entrants.find((e) => R.arcs[e].rang >= 3)];
-        c = { id: this.controleurs.length, x: n.x, z: n.z, axe: R.cap(a0.id, true), decalage: this.rnd() * CYCLE, noeuds: [] };
+        const ent = n.entrants.map((e) => R.arcs[e]).sort((a, b) => b.rang - a.rang);
+        c = { id: this.controleurs.length, x: n.x, z: n.z, axe: R.cap(ent[0].id, true), decalage: this.rnd() * CYCLE, noeuds: [], reel: false };
         this.controleurs.push(c);
       }
+      if (carrefourReel.has(n.id)) c.reel = true;
       c.noeuds.push(n.id);
       n.feu = c.id;
     }
@@ -212,8 +228,13 @@ export class Circulation {
       const m = R.point(a.id, a.long / 2);
       return (a.long / a.vmax) * (distTrace(m.x, m.z) < 25 ? 1 : 12);
     };
+    // Ligne en boucle (départ = arrivée, ex. 06B) : le demi-tour se fait au point le plus éloigné du tracé.
+    let fin = tr[tr.length - 1];
+    if (Math.hypot(fin[0] - tr[0][0], fin[1] - tr[0][1]) < 60) {
+      fin = tr.reduce((m, p) => (Math.hypot(p[0] - tr[0][0], p[1] - tr[0][1]) > Math.hypot(m[0] - tr[0][0], m[1] - tr[0][1]) ? p : m), tr[0]);
+    }
     const n0 = R.noeudProche(tr[0][0], tr[0][1], (n) => n.sortants.length > 0);
-    const n1 = R.noeudProche(tr[tr.length - 1][0], tr[tr.length - 1][1], (n) => n.entrants.length > 0);
+    const n1 = R.noeudProche(fin[0], fin[1], (n) => n.entrants.length > 0);
     const aller = R.itineraire(n0, n1, cout);
     const retour = R.itineraire(n1, n0, cout);
     if (!aller || !retour || !aller.length) return null;
@@ -229,14 +250,19 @@ export class Circulation {
         for (let s = 0; s <= a.long; s += 4) {
           const p = R.point(aid, s);
           const d = Math.hypot(p.x - x, p.z - z);
-          if (!best || d < best.d) best = { i, s: Math.max(4, Math.min(a.long - 12, s)), d, abs: acc + s };
+          if (!best || d < best.d) best = { i, s: Math.max(Math.min(12, a.long / 2), Math.min(a.long - 12, s)), d, abs: acc + s };
         }
         acc += a.long;
       });
       return best;
     };
     const stops = [];
-    for (const a of reels) stops.push({ id: a.id, nom: a.nom || "Arrêt", reel: true, x: a.x, z: a.z });
+    // Un même arrêt peut être cartographié par plusieurs points OSM (quai, poteau, chaque côté) :
+    // les points de même nom à moins de 80 m forment un seul arrêt.
+    for (const a of reels) {
+      if (a.nom && stops.some((st) => st.nom === a.nom && Math.hypot(st.x - a.x, st.z - a.z) < 80)) continue;
+      stops.push({ id: a.id, nom: a.nom || "Arrêt", reel: true, x: a.x, z: a.z });
+    }
     // Arrêts simulés le long de l'aller.
     let acc = 0;
     const longueur = aller.reduce((s, aid) => s + R.arcs[aid].long, 0);
@@ -565,7 +591,12 @@ export class Circulation {
       // Arrêt de bus ou client à prendre.
       if (v.arretsAVenir?.length) {
         const st = v.arretsAVenir[0];
-        if (st.i === v.iRoute) obstacle(st.s + v.long / 2);
+        const cible = st.s + v.long / 2;
+        // Arrêt dépassé (ex. juste après un carrefour où le bus ne pouvait pas freiner) : on ne recule pas.
+        if (st.i < v.iRoute || (st.i === v.iRoute && avant > cible + 6)) {
+          v.arretsAVenir.shift();
+          this._journal("arret_manque", { v: v.id, arret: st.id });
+        } else if (st.i === v.iRoute && avant < cible + 0.5) obstacle(cible);
       }
       if (v.client && v.clientArc === v.arc && v.clientS > v.s) obstacle(v.clientS + v.long / 2 + 1);
       // Fin d'itinéraire : s'arrêter avant la fin de l'arc.
@@ -819,7 +850,8 @@ export class Circulation {
     // Arrêt de bus atteint ?
     if (v.arretsAVenir?.length) {
       const st = v.arretsAVenir[0];
-      if (st.i === v.iRoute && Math.abs(avant - (st.s + v.long / 2)) < 3) {
+      const ecart = avant - (st.s + v.long / 2);
+      if (st.i === v.iRoute && ecart > -3 && ecart < 6) {
         v.arretsAVenir.shift();
         v.etat = "arret"; v.arretActuel = st.id; v.minuterie = 1.5; v.attente = 0;
         this._journal("arrivee_arret", { v: v.id, arret: st.id });
@@ -1113,6 +1145,7 @@ export class Circulation {
       vitesseMoyenne: moy(this.vehicules), vitesseAxes: moy(maj),
       arretes: this.vehicules.filter((v) => v.v < 0.5).length,
       accidents: this.vehicules.filter((v) => v.etat === "accident").length,
+      feuxReels: this.controleurs.filter((c) => c.reel).length, feuxSimules: this.controleurs.filter((c) => !c.reel).length,
     };
   }
 

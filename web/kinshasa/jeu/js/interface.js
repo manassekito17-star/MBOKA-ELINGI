@@ -75,14 +75,14 @@ export function editeurPersonnage(racine, appliquer) {
 }
 
 /** Panneau des lignes de transport : arrêts, terminus, prochain passage (simulé). */
-export function panneauTransports(racine, sim) {
+export function panneauTransports(racine, sim, nomZone = "Limete") {
   let choix = sim.lignes[0]?.id;
   function rendre() {
     const l = sim.lignes.find((x) => x.id === choix);
     const h = l ? sim.horaires(l.id) : [];
     const bus = l ? sim.vehicules.filter((v) => v.ligne === l.id) : [];
     racine.innerHTML = `
-      <h2>Transports publics — Limete</h2>
+      <h2>Transports publics — ${esc(nomZone)}</h2>
       <div class="onglets">${sim.lignes.map((x) => `<button data-l="${x.id}" class="${x.id === choix ? "choisi" : ""}">${esc(x.ref || "")} ${x.type === "minibus" ? "Minibus" : "Bus"}</button>`).join("")}</div>
       ${l ? `
       <p><b>${esc(l.nom)}</b><br>${esc(l.depart || "—")} → ${esc(l.terminus || "—")} ·
@@ -105,4 +105,25 @@ export function panneauTransports(racine, sim) {
   return {
     ouvrir() { racine.hidden = false; rendre(); clearInterval(minuterie); minuterie = setInterval(() => { if (racine.hidden) clearInterval(minuterie); else rendre(); }, 2000); },
   };
+}
+
+/** Choix de la zone jouable : recharge le jeu sur la zone choisie (la partie en cours est sauvegardée). */
+export function panneauZones(racine, zones, actuelle, avantDepart) {
+  racine.innerHTML = `
+    <h2>Zones jouables</h2>
+    <p class="note">Seules ces portions de Kinshasa sont jouables pour l'instant. Chaque zone a sa propre sauvegarde.</p>
+    <div class="zones">${Object.entries(zones).map(([id, z]) => `
+      <button data-zone="${id}" class="${id === actuelle ? "choisi" : ""}"><b>${esc(z.nom)}</b><br><small>${esc(z.description)}</small></button>`).join("")}
+    </div>
+    <div class="actions"><button data-fermer>Fermer</button></div>`;
+  racine.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if ("fermer" in b.dataset) racine.hidden = true;
+    if (b.dataset.zone && b.dataset.zone !== actuelle) {
+      avantDepart();
+      location.href = `?zone=${encodeURIComponent(b.dataset.zone)}`;
+    }
+  });
+  return { ouvrir() { racine.hidden = false; } };
 }

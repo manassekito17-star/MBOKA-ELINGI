@@ -19,17 +19,20 @@ export class Projection {
 
 /** Grille de relief (Float32, n×n, pas en m), centrée sur l'origine. */
 export class Relief {
-  constructor(donnees, n, pas) {
+  /** Grille n (est-ouest) × nz (nord-sud) ; nz = n pour une zone carrée. */
+  constructor(donnees, n, pas, nz = n) {
     this.d = donnees;
     this.n = n;
+    this.nz = nz;
     this.pas = pas;
     this.demi = ((n - 1) * pas) / 2;
+    this.demiZ = ((nz - 1) * pas) / 2;
   }
   hauteur(x, z) {
     const fx = (x + this.demi) / this.pas;
-    const fz = (z + this.demi) / this.pas;
+    const fz = (z + this.demiZ) / this.pas;
     const i0 = Math.min(this.n - 2, Math.max(0, Math.floor(fx)));
-    const j0 = Math.min(this.n - 2, Math.max(0, Math.floor(fz)));
+    const j0 = Math.min(this.nz - 2, Math.max(0, Math.floor(fz)));
     const tx = Math.min(1, Math.max(0, fx - i0));
     const tz = Math.min(1, Math.max(0, fz - j0));
     const n = this.n;

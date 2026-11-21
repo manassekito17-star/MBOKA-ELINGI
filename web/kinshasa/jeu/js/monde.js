@@ -44,7 +44,7 @@ export class Monde {
     this.manifest = await (await fetch(this.base + "manifest.json")).json();
     const r = this.manifest.relief;
     const buf = await (await fetch(this.base + "relief.bin")).arrayBuffer();
-    this.relief = new Relief(new Float32Array(buf), r.n, r.pas);
+    this.relief = new Relief(new Float32Array(buf), r.nx ?? r.n, r.pas, r.nz ?? r.n);
     this.reseau = await (await fetch(this.base + "reseau.json")).json();
     this.index = new Map(this.manifest.tuiles.map((t) => [`${t.i}_${t.j}`, t]));
     this._creerSol();
@@ -57,9 +57,10 @@ export class Monde {
 
   /** Sol continu (relief réel lissé) + collision « heightfield ». */
   _creerSol() {
-    const { n, pas } = this.manifest.relief;
-    const taille = (n - 1) * pas;
-    const geo = new THREE.PlaneGeometry(taille, taille, n - 1, n - 1);
+    const { pas } = this.manifest.relief;
+    const n = this.relief.n, nz = this.relief.nz;
+    const taille = (n - 1) * pas, tailleZ = (nz - 1) * pas;
+    const geo = new THREE.PlaneGeometry(taille, tailleZ, n - 1, nz - 1);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position;
     const couleurs = new Float32Array(pos.count * 3);
@@ -76,14 +77,14 @@ export class Monde {
     const sol = new THREE.Mesh(geo, this.matSol);
     sol.receiveShadow = true;
     this.scene.add(sol);
-    this.physique.ajouterRelief(this.relief.d, n, taille);
+    this.physique.ajouterRelief(this.relief.d, n, taille, nz);
   }
 
   /** Charge/décharge les tuiles selon la position du joueur. */
   mettreAJour(x, z) {
     const { demi, tuile } = this.manifest;
-    const ci = Math.floor((x + demi) / tuile);
-    const cj = Math.floor((z + demi) / tuile);
+    const ci = Math.floor((x + (this.manifest.demi_x ?? demi)) / tuile);
+    const cj = Math.floor((z + (this.manifest.demi_z ?? demi)) / tuile);
     const voulu = new Set();
     for (let di = -this.rayon; di <= this.rayon; di++) {
       for (let dj = -this.rayon; dj <= this.rayon; dj++) {
@@ -284,7 +285,8 @@ export class Monde {
   }
 
   _eau(liste) {
-    const g = this._polys(liste, () => [1, 1, 1], -0.3);
+    // Au-dessus du sol (posé à -0,05 m) et sous les routes : sinon l'eau serait cachée par le terrain.
+    const g = this._polys(liste, () => [1, 1, 1], 0.06);
     return new THREE.Mesh(g, this.matEau);
   }
 

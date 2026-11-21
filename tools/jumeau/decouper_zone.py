@@ -16,10 +16,14 @@ Données (toutes réelles, avec leur niveau de confiance) :
 Repère local : x = est (m), z = sud (m), y = altitude relative (m).
 
 Usage :
-  python3 tools/jumeau/decouper_zone.py <id> <lat> <lon> <demi_largeur_m> <dem.tif> <sortie>
-Exemple (Limete, Tour de l'Échangeur) :
+  python3 tools/jumeau/decouper_zone.py <id> <lat> <lon> <demi> <dem.tif> <sortie>
+  <demi> : demi-côté en mètres (zone carrée) ou « est-ouest x nord-sud »
+  (zone rectangulaire, ex. 4600x2000).
+Exemples :
   python3 tools/jumeau/decouper_zone.py limete -4.374384 15.345467 1600 \
       data/kinshasa/relief_copernicus_glo30.tif web/kinshasa/jeu/zones/limete
+  python3 tools/jumeau/decouper_zone.py gombe -4.3120 15.30485 4600x2000 \
+      data/kinshasa/relief_copernicus_glo30.tif web/kinshasa/jeu/zones/gombe
 """
 import json
 import math
@@ -62,11 +66,11 @@ def r1(v):
     return round(float(v), 1)
 
 
-def main(zid, lat0, lon0, half, dem_path, out):
+def main(zid, lat0, lon0, hx, hz, dem_path, out):
     P = Projection(lat0, lon0)
     os.makedirs(out, exist_ok=True)
-    lon_a, lat_a = P.lonlat(-half, half)
-    lon_b, lat_b = P.lonlat(half, -half)
+    lon_a, lat_a = P.lonlat(-hx, hz)
+    lon_b, lat_b = P.lonlat(hx, -hz)
     W, S, E, N = min(lon_a, lon_b), min(lat_a, lat_b), max(lon_a, lon_b), max(lat_a, lat_b)
     for k in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_PROFILE"):
         os.environ.pop(k, None)
@@ -103,37 +107,55 @@ def main(zid, lat0, lon0, half, dem_path, out):
 
     # --- Relief : grille de 16 m, lissée (le DEM Copernicus est un modèle de surface) ---
     STEP = 16.0
-    n = int(2 * half / STEP) + 1
+    nx = int(2 * hx / STEP) + 1
+    nz = int(2 * hz / STEP) + 1
     src = rasterio.open(dem_path)
     dem = src.read(1).astype(np.float32)
     dem = gaussian_filter(dem, sigma=2.0)          # ~60 m : efface en partie bâtiments et arbres
-    grid = np.zeros((n, n), np.float32)
-    for j in range(n):
-        for i in range(n):
-            lon, lat = P.lonlat(-half + i * STEP, -half + j * STEP)
+    grid = np.zeros((nz, nx), np.float32)
+    for j in range(nz):
+        for i in range(nx):
+            lon, lat = P.lonlat(-hx + i * STEP, -hz + j * STEP)
             r, c = src.index(lon, lat)
             grid[j, i] = dem[r, c]
+    # Grandes étendues d'eau (fleuve Congo) : surface mise à plat au niveau de l'eau (10e centile du
+    # modèle de surface sur l'étendue), pour que l'eau dessinée par le jeu recouvre bien le sol.
+    import shapely
+    xs = -hx + np.arange(nx) * STEP
+    zs = -hz + np.arange(nz) * STEP
+    gx, gz = np.meshgrid(xs, zs)
+    for g, sub, name in eau:
+        geom = wkb.loads(bytes(g))
+        if geom.geom_type not in ("Polygon", "MultiPolygon"):
+            continue
+        geom = to_local(geom, P).intersection(box(-hx, -hz, hx, hz))
+        if geom.is_empty or geom.area < 50_000:
+            continue
+        dedans = shapely.contains_xy(geom, gx, gz)
+        if dedans.sum() >= 4:
+            grid[dedans] = np.percentile(grid[dedans], 10)
     base = float(np.median(grid))
     grid -= base
     grid.astype("<f4").tofile(os.path.join(out, "relief.bin"))
 
     def height_at(x, z):
-        fx = (x + half) / STEP
-        fz = (z + half) / STEP
-        i0 = int(np.clip(math.floor(fx), 0, n - 2))
-        j0 = int(np.clip(math.floor(fz), 0, n - 2))
+        fx = (x + hx) / STEP
+        fz = (z + hz) / STEP
+        i0 = int(np.clip(math.floor(fx), 0, nx - 2))
+        j0 = int(np.clip(math.floor(fz), 0, nz - 2))
         tx, tz = np.clip(fx - i0, 0, 1), np.clip(fz - j0, 0, 1)
         a = grid[j0, i0] * (1 - tx) + grid[j0, i0 + 1] * tx
         b = grid[j0 + 1, i0] * (1 - tx) + grid[j0 + 1, i0 + 1] * tx
         return float(a * (1 - tz) + b * tz)
 
-    nc = int(math.ceil(2 * half / CHUNK))
-    chunks = {(i, j): {"b": [], "r": [], "l": [], "w": [], "s": [], "t": []} for i in range(nc) for j in range(nc)}
+    ncx = int(math.ceil(2 * hx / CHUNK))
+    ncz = int(math.ceil(2 * hz / CHUNK))
+    chunks = {(i, j): {"b": [], "r": [], "l": [], "w": [], "s": [], "t": []} for i in range(ncx) for j in range(ncz)}
 
     def key(x, z):
-        return (min(nc - 1, max(0, int((x + half) // CHUNK))), min(nc - 1, max(0, int((z + half) // CHUNK))))
+        return (min(ncx - 1, max(0, int((x + hx) // CHUNK))), min(ncz - 1, max(0, int((z + hz) // CHUNK))))
 
-    zone_box = box(-half, -half, half, half)
+    zone_box = box(-hx, -hz, hx, hz)
 
     # --- Bâtiments ---
     stats = {"confirmee": 0, "satellite": 0, "hauteur_documentee": 0, "ignores": 0}
@@ -193,9 +215,10 @@ def main(zid, lat0, lon0, half, dem_path, out):
                 if name:
                     item_r["n"] = name
                 reseau.append(item_r)
-            for i in range(nc):
-                for j in range(nc):
-                    cb = box(-half + i * CHUNK, -half + j * CHUNK, -half + (i + 1) * CHUNK, -half + (j + 1) * CHUNK)
+            bx0, bz0, bx1, bz1 = part.bounds
+            for i in range(max(0, int((bx0 + hx) // CHUNK)), min(ncx, int((bx1 + hx) // CHUNK) + 1)):
+                for j in range(max(0, int((bz0 + hz) // CHUNK)), min(ncz, int((bz1 + hz) // CHUNK) + 1)):
+                    cb = box(-hx + i * CHUNK, -hz + j * CHUNK, -hx + (i + 1) * CHUNK, -hz + (j + 1) * CHUNK)
                     if not part.intersects(cb):
                         continue
                     piece = part.intersection(cb)
@@ -228,13 +251,22 @@ def main(zid, lat0, lon0, half, dem_path, out):
 
     # --- Eau, occupation du sol ---
     def add_poly(lst, geom, extra):
+        """Polygone découpé sur CHAQUE tuile qu'il recouvre (un fleuve de plusieurs km reste visible partout)."""
         geom = to_local(geom, P).intersection(zone_box)
-        for pg in (geom.geoms if hasattr(geom, "geoms") else [geom]):
-            if pg.geom_type != "Polygon" or pg.area < 20:
-                continue
-            c = pg.representative_point()
-            ring = list(pg.simplify(0.5).exterior.coords)[:-1]
-            chunks[key(c.x, c.y)][lst].append({"p": [r1(v) for xy in ring for v in xy], **extra})
+        if geom.is_empty:
+            return
+        bx0, bz0, bx1, bz1 = geom.bounds
+        for i in range(max(0, int((bx0 + hx) // CHUNK)), min(ncx, int((bx1 + hx) // CHUNK) + 1)):
+            for j in range(max(0, int((bz0 + hz) // CHUNK)), min(ncz, int((bz1 + hz) // CHUNK) + 1)):
+                cb = box(-hx + i * CHUNK, -hz + j * CHUNK, -hx + (i + 1) * CHUNK, -hz + (j + 1) * CHUNK)
+                piece = geom.intersection(cb)
+                for pg in (piece.geoms if hasattr(piece, "geoms") else [piece]):
+                    if pg.geom_type != "Polygon" or pg.area < 20:
+                        continue
+                    # Les îlots (trous) sont ignorés : le jeu ne trace que le contour extérieur.
+                    ring = list(pg.simplify(0.5).exterior.coords)[:-1]
+                    if len(ring) >= 3:
+                        chunks[(i, j)][lst].append({"p": [r1(v) for xy in ring for v in xy], **extra})
 
     for g, sub, name in eau:
         geom = wkb.loads(bytes(g))
@@ -287,8 +319,9 @@ def main(zid, lat0, lon0, half, dem_path, out):
         liste.append({"i": i, "j": j, "f": name, "nb": len(ch["b"])})
     json.dump(reseau, open(os.path.join(out, "reseau.json"), "w", encoding="utf-8"), separators=(",", ":"))
     manifest = {
-        "id": zid, "origine": [lat0, lon0], "demi": half, "tuile": CHUNK, "n": nc,
-        "relief": {"pas": STEP, "n": n, "base_m": round(base, 1)},
+        "id": zid, "origine": [lat0, lon0], "demi": max(hx, hz), "demi_x": hx, "demi_z": hz,
+        "tuile": CHUNK, "n": max(ncx, ncz), "nx": ncx, "nz": ncz,
+        "relief": {"pas": STEP, "n": nx, "nx": nx, "nz": nz, "base_m": round(base, 1)},
         "tuiles": liste,
         "stats": {**stats, "arbres_reels": reels, "arbres_estimes": estimes, "routes": len(reseau), "lieux": len(lieux)},
         "attribution": "© contributeurs OpenStreetMap (ODbL) · © Overture Maps Foundation · Google Open Buildings (CC BY 4.0) "
@@ -302,4 +335,5 @@ def main(zid, lat0, lon0, half, dem_path, out):
 if __name__ == "__main__":
     if len(sys.argv) != 7:
         sys.exit(__doc__)
-    main(sys.argv[1], float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4]), sys.argv[5], sys.argv[6])
+    dims = [float(v) for v in sys.argv[4].lower().split("x")]
+    main(sys.argv[1], float(sys.argv[2]), float(sys.argv[3]), dims[0], dims[-1], sys.argv[5], sys.argv[6])

@@ -33,6 +33,11 @@ test("projection : aller-retour géographique précis au centimètre", () => {
 test("relief : interpolation bilinéaire", () => {
   const r = new Relief(new Float32Array([0, 10, 0, 10]), 2, 100);
   assert.equal(r.hauteur(0, 0), 5);
+  // Zone rectangulaire (ex. Gombe) : 3 colonnes est-ouest × 2 rangées nord-sud, pas de 10 m.
+  const rr = new Relief(new Float32Array([0, 1, 2, 10, 11, 12]), 3, 10, 2);
+  assert.equal(rr.hauteur(-10, -5), 0);
+  assert.equal(rr.hauteur(10, 5), 12);
+  assert.equal(rr.hauteur(0, 0), 6);
 });
 
 test("trajet et polygone", () => {
