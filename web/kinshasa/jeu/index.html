@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Kinshasa 3D — mode jeu</title>
+  <meta name="description" content="Explorer Limete (Kinshasa) à pied et en véhicule, sur la vraie carte.">
+  <link rel="stylesheet" href="jeu.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+      "@dimforge/rapier3d-compat": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/rapier.es.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="jeu"></div>
+
+  <div id="chargement">
+    <h1>Kinshasa 3D</h1>
+    <p>Zone jouable : Limete — Tour de l'Échangeur (3,2 × 3,2 km, données réelles)</p>
+    <div class="barre"><div id="chargement-barre"></div></div>
+    <p id="chargement-texte">Démarrage…</p>
+  </div>
+
+  <div id="hud">
+    <div class="bloc"><span id="hud-heure">--:--</span><span id="hud-argent">--</span></div>
+    <a id="hud-carte" class="bloc lien" href="../index.html">🌍 Vue satellite / carte</a>
+  </div>
+  <div id="hud-vitesse" hidden>
+    <div><b id="vitesse">0</b> km/h</div>
+    <div id="vehicule-nom"></div>
+    <div class="carbu"><span id="carburant"></span></div>
+  </div>
+  <div id="lieu" hidden></div>
+  <div id="message" hidden></div>
+  <div id="hud-pos"></div>
+
+  <div id="aide" hidden>
+    <h2>Commandes</h2>
+    <table>
+      <tr><td>Z Q S D (AZERTY) / W A S D / flèches</td><td>Marcher · conduire</td></tr>
+      <tr><td>Maj</td><td>Courir</td></tr>
+      <tr><td>Espace</td><td>Sauter · frein</td></tr>
+      <tr><td>Souris (cliquer pour capturer)</td><td>Tourner la caméra</td></tr>
+      <tr><td>F</td><td>Monter / descendre d'un véhicule</td></tr>
+      <tr><td>C</td><td>Caméra intérieure / extérieure</td></tr>
+      <tr><td>L · H</td><td>Phares · klaxon</td></tr>
+      <tr><td>E</td><td>Interagir (commerce, station, restaurant)</td></tr>
+      <tr><td>T · N · G</td><td>Météo · avancer l'heure · densité de circulation</td></tr>
+      <tr><td>P · M</td><td>Sauvegarder · son</td></tr>
+    </table>
+    <p class="note">Bâtiments, routes et lieux : données réelles. Circulation, piétons, prix et lampadaires : <b>simulés</b>.
+      Hauteur de la plupart des bâtiments : <b>estimée</b>.</p>
+    <p id="attribution" class="note"></p>
+  </div>
+
+  <div id="tactile" hidden>
+    <div class="joy"><i></i></div>
+    <div class="boutons">
+      <button data-touche="KeyF">F<small>véhicule</small></button>
+      <button data-touche="KeyE">E<small>agir</small></button>
+      <button data-touche="Space">⤒<small>saut</small></button>
+      <button data-touche="frein">■<small>frein</small></button>
+      <button data-touche="course">»<small>courir</small></button>
+      <button data-touche="KeyC">◎<small>caméra</small></button>
+      <button data-touche="Escape">?<small>aide</small></button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

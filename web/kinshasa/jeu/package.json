@@ -1,0 +1,13 @@
+{
+  "name": "kinshasa-jeu",
+  "private": true,
+  "type": "module",
+  "description": "Mode jeu (GTA) du jumeau numérique de Kinshasa — tests automatiques",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "three": "0.170.0",
+    "@dimforge/rapier3d-compat": "0.14.0"
+  }
+}

@@ -17,3 +17,7 @@ build/
 .DS_Store
 Thumbs.db
 *.tmp
+
+# Jumeau numérique : dépendances de test et fichiers intermédiaires
+node_modules/
+web/kinshasa/jeu/package-lock.json

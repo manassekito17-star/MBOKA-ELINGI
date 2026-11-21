@@ -1,0 +1,75 @@
+:root {
+[hidden] { display: none !important; }
+  --fond: #14161a;
+  --panneau: rgba(20, 22, 26, 0.92);
+  --texte: #f1efe9;
+  --doux: #a9a59b;
+  --accent: #f2b233;
+  --bord: rgba(255, 255, 255, 0.12);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--fond); color: var(--texte);
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+#carte { position: fixed; inset: 0; }
+
+#barre { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; gap: 12px; align-items: flex-start;
+  pointer-events: none; z-index: 5; }
+#barre > * { pointer-events: auto; }
+.titre { background: var(--panneau); border: 1px solid var(--bord); border-radius: 12px; padding: 8px 14px;
+  display: flex; flex-direction: column; line-height: 1.15; }
+.titre strong { color: var(--accent); font-size: 17px; }
+.titre span { color: var(--doux); font-size: 12px; }
+.recherche { position: relative; flex: 1; max-width: 460px; }
+#q { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--bord); background: var(--panneau);
+  color: var(--texte); font-size: 16px; }
+#q:focus { outline: 2px solid var(--accent); }
+#resultats { list-style: none; margin: 6px 0 0; padding: 0; background: var(--panneau); border-radius: 12px;
+  border: 1px solid var(--bord); max-height: 55vh; overflow: auto; }
+#resultats:empty { display: none; }
+#resultats li { padding: 9px 14px; cursor: pointer; border-bottom: 1px solid var(--bord); }
+#resultats li:last-child { border-bottom: 0; }
+#resultats li:hover, #resultats li[aria-selected="true"] { background: rgba(242, 178, 51, 0.16); }
+#resultats .type { color: var(--doux); font-size: 12px; margin-left: 6px; }
+
+#outils { position: fixed; right: 12px; top: 80px; display: flex; flex-direction: column; gap: 8px; z-index: 5; }
+#outils button, #filtres-ouvrir { background: var(--panneau); color: var(--texte); border: 1px solid var(--bord);
+  border-radius: 10px; padding: 9px 12px; font-size: 14px; cursor: pointer; min-width: 52px; }
+#outils button:hover, #filtres-ouvrir:hover { border-color: var(--accent); }
+#outils button.actif { background: var(--accent); color: #1a1a1a; }
+#outils button.jouer { background: #2e7d32; border-color: #4caf50; font-weight: 700; }
+
+#filtres { position: fixed; left: 12px; top: 80px; z-index: 5; }
+#filtres-liste { margin-top: 6px; background: var(--panneau); border: 1px solid var(--bord); border-radius: 12px;
+  padding: 8px 12px; max-height: 60vh; overflow: auto; }
+#filtres-liste label { display: flex; gap: 8px; align-items: center; padding: 4px 0; white-space: nowrap; }
+.pastille { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+
+#fiche { position: fixed; left: 12px; bottom: 34px; width: min(380px, calc(100vw - 24px)); z-index: 6;
+  background: var(--panneau); border: 1px solid var(--bord); border-radius: 14px; padding: 14px 16px; }
+#fiche h2 { margin: 0 24px 6px 0; font-size: 17px; }
+#fiche dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0 0; font-size: 14px; }
+#fiche dt { color: var(--doux); }
+#fiche dd { margin: 0; }
+#fiche-fermer { position: absolute; right: 10px; top: 8px; background: none; border: 0; color: var(--doux);
+  font-size: 24px; cursor: pointer; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.badge.ok { background: #2e7d32; }
+.badge.sat { background: #b26a00; }
+.badge.est { background: #5a5a5a; }
+
+#legende { position: fixed; right: 12px; bottom: 34px; z-index: 5; background: var(--panneau); border: 1px solid var(--bord);
+  border-radius: 12px; padding: 10px 14px; font-size: 13px; max-width: 270px; }
+#legende div { display: flex; gap: 8px; align-items: center; padding: 2px 0; }
+#stats { position: fixed; left: 50%; transform: translateX(-50%); bottom: 34px; z-index: 4; color: var(--doux);
+  font-size: 12px; background: rgba(20, 22, 26, 0.7); padding: 4px 10px; border-radius: 8px; }
+
+.maplibregl-ctrl-attrib { font-size: 11px; }
+
+@media (max-width: 640px) {
+  .titre span { display: none; }
+  .titre { padding: 8px 10px; }
+  #outils { top: auto; bottom: 120px; }
+  #filtres { top: 74px; }
+  #stats { display: none; }
+  #legende { bottom: auto; top: 74px; right: 76px; max-width: 200px; font-size: 12px; }
+}

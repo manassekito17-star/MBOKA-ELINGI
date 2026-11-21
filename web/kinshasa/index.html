@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kinshasa 3D — jumeau numérique</title>
+  <meta name="description" content="Jumeau numérique 3D de Kinshasa (RDC) : bâtiments, routes, relief et lieux réels.">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="carte" aria-label="Carte 3D de Kinshasa"></div>
+
+  <header id="barre">
+    <div class="titre"><strong>Kinshasa 3D</strong><span>jumeau numérique</span></div>
+    <div class="recherche">
+      <input id="q" type="search" placeholder="Commune, avenue, hôpital, marché…" autocomplete="off" aria-label="Rechercher">
+      <ul id="resultats" role="listbox"></ul>
+    </div>
+  </header>
+
+  <nav id="outils" aria-label="Vues">
+    <button data-vue="ciel" title="Vue aérienne de toute la ville">Ville</button>
+    <button data-vue="3d" title="Vue 3D inclinée">3D</button>
+    <button data-vue="pieton" title="Vue au niveau de la rue">Piéton</button>
+    <button id="couleurs" title="Couleurs : apparence ou niveau de confiance">Confiance</button>
+    <button id="satellite" title="Image satellite Sentinel-2 (2016, 10 m par pixel)">Satellite</button>
+    <button id="jouer" class="jouer" title="Explorer à pied et en véhicule (zone de Limete)">▶ Jouer</button>
+    <button id="plein" title="Plein écran">⛶</button>
+  </nav>
+
+  <aside id="filtres" aria-label="Catégories de lieux">
+    <button id="filtres-ouvrir">Lieux ▾</button>
+    <div id="filtres-liste" hidden></div>
+  </aside>
+
+  <aside id="fiche" hidden>
+    <button id="fiche-fermer" aria-label="Fermer">×</button>
+    <div id="fiche-contenu"></div>
+  </aside>
+
+  <div id="legende" hidden></div>
+  <div id="stats"></div>
+
+  <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
