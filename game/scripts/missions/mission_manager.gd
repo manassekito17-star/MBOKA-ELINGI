@@ -172,7 +172,11 @@ func _player_map_pos() -> Vector2:
 
 func _make_giver(giver_name: String) -> Node3D:
 	var root := Node3D.new()
-	var a := Avatar.new().setup(Color(0.28, 0.18, 0.11), Color(0.1, 0.45, 0.8), Color(0.9, 0.85, 0.7))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(giver_name)
+	var a := Avatar.new().randomize_look(rng)
+	a.female = giver_name.begins_with("Mama")
+	a.pose = "Idle_Talking"
 	root.add_child(a)
 	var l := Label3D.new()
 	l.text = "!  %s" % giver_name

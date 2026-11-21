@@ -25,6 +25,7 @@ void fragment() {
 		// Fenêtres (certaines avec volets/grilles de couleur), fondu au loin.
 		float win = step(0.38, fy) * step(fy, 0.78) * step(0.28, fx) * step(fx, 0.72);
 		win *= step(0.12, cell) * (1.0 - smoothstep(180.0, 320.0, dist));
+		win *= step(0.95, COLOR.a);   // murs de clôture (alpha 0.85) : pas de fenêtres
 		vec3 glass = mix(vec3(0.06, 0.08, 0.10), vec3(0.18, 0.32, 0.38), step(0.7, cell));
 		// Soubassement rouge (poussière de latérite) et bandeau de dalle.
 		float plinth = 1.0 - smoothstep(0.35, 0.75, uv.y);

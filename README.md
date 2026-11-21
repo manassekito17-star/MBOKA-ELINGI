@@ -2,7 +2,7 @@
 
 *« Le beau pays » en lingala.* Jeu de simulation de vie en monde ouvert, à **Kinshasa**.
 
-**Version 0.1.0 (alpha)**. Zone pilote : **Limete / Échangeur**, reproduite à partir de la **vraie carte** (OpenStreetMap).
+**Version 0.2.0 (alpha)**. Zone : **Limete, de l'Échangeur à la 7e rue** (environ 3 × 4,5 km), reproduite à partir de la **vraie carte** (OpenStreetMap, complétée par les bâtiments détectés par satellite).
 
 | | |
 |---|---|
@@ -10,16 +10,16 @@
 | Plateformes | Windows (installateur `.exe`), Android (`.apk`). iOS : plus tard, un Mac est nécessaire |
 | Langues du jeu | Français et lingala |
 
-## Contenu de la version 0.1
+## Contenu de la version 0.2
 
-- **9 441 bâtiments réels** et **602 routes réelles** de Limete, générés automatiquement depuis OpenStreetMap
-- **Tour de l'Échangeur** modélisée d'après des vues aériennes : 4 colonnes, nacelles dorées, mât et flèche jaune, esplanade en étoile
-- **Monument Patrice Lumumba**, FIKIN, Université Libre de Kinshasa, Notre-Dame d'Afrique et des panneaux sur les lieux réels
-- **Circulation kinoise** : taxis jaunes, taxis-bus « Esprit de mort », bus, motos-taxis « wewa », piétons
-- **5 missions** avec dialogues en français et en lingala, un chronomètre et des récompenses en francs congolais (FC)
-- **Mini-carte ronde** et **grande carte** (touche `M`) : icônes par catégorie, légende, point de destination, **vue 3D**
-- **Commandes** : clavier (Z/Q/S/D), souris, manette, écran tactile (joystick virtuel)
-- Sauvegarde automatique (argent, missions)
+- **44 647 bâtiments** : 22 031 relevés dans OpenStreetMap, 15 810 détectés par satellite (Google Open Buildings via Overture Maps) et 6 806 maisons de parcelle générées pour combler les îlots vides (marquées comme générées dans les données)
+- **Toits en tôle à deux pentes**, murs de clôture des parcelles, lampadaires sur les boulevards, uniquement les **vrais arbres** cartographiés
+- **Tour de l'Échangeur** avec **ascenseur jusqu'à la plateforme panoramique (158 m)**
+- **2 passerelles piétonnes** réelles sur le boulevard Lumumba, **praticables** (escaliers, tablier, auvent)
+- **Personnages humains 3D réalistes** et animés (marche, course, sprint, saut, discussion), avec teints de peau foncés, vêtements variés et pagnes en wax. Personnage principal : tresses plaquées, boucle d'oreille, veste à col montant
+- **Minibus Mercedes 207 « Esprit de mort »** (porte ouverte, chargeur), taxis jaunes, bus, motos-taxis
+- 5 missions en français et en lingala, mini-carte ronde, grande carte 2D (légende, destination) et vue 3D
+- Commandes clavier, souris, manette et tactile (joystick, SAUT, COURIR, ACTION)
 
 ## Installer le jeu
 
@@ -41,7 +41,7 @@
 | Caméra | Clic, puis souris (Échap libère la souris) | Stick droit | Glisser à droite |
 | Courir | Maj | Clic stick gauche | Bouton COURIR |
 | Sauter | Espace | A | Bouton SAUT |
-| Accepter une mission | E | X | Bouton « Accepter » |
+| Accepter une mission / ascenseur | E | X | Bouton ACTION |
 | Grande carte | M | Select | Bouton CARTE |
 
 ## Structure du dépôt
@@ -67,12 +67,15 @@ docs/                 Documentation (feuille de route, architecture, sécurité)
 2. Ouvrez `game/project.godot`, puis appuyez sur **F5** pour lancer le jeu.
 3. Pour mettre à jour la carte :
    ```
-   python tools/osm/fetch_osm.py 15.336 -4.385 15.356 -4.366 echangeur.osm
-   python tools/osm/build_city_data.py echangeur.osm game/data/limete_echangeur.json
+   python tools/osm/fetch_osm.py 15.328 -4.385 15.356 -4.345 limete.osm 3
+   python tools/osm/fetch_overture.py 15.328 -4.385 15.356 -4.345 overture.geojson
+   python tools/osm/build_city_data.py limete.osm game/data/limete_echangeur.json --extra overture.geojson --fill
    ```
 
 ## Crédits et licences
 
 - Données cartographiques : **© les contributeurs d'OpenStreetMap**, licence ODbL 1.0 (https://www.openstreetmap.org/copyright)
+- Bâtiments complémentaires : **© Overture Maps Foundation** (ODbL) et **Google Open Buildings** (CC BY 4.0)
+- Personnages et animations : **Quaternius** (« Universal Base Characters », « Universal Animation Library »), licence CC0
 - Moteur : Godot Engine (licence MIT)
 - Ce jeu est une création originale. Il n'utilise aucune ressource d'un autre jeu.

@@ -10,6 +10,7 @@ var player: Player
 var hud: HUD
 var missions: MissionManager
 var traffic: Traffic
+var _tower: TourEchangeur
 
 
 func _ready() -> void:
@@ -31,12 +32,16 @@ func _ready() -> void:
 	var tower := TourEchangeur.new()
 	tower.name = "TourEchangeur"
 	city.add_child(tower)
+	_tower = tower
 	var lumumba_poi := city.find_poi("n2298412028")
 	if not lumumba_poi.is_empty():
 		var monument := MonumentLumumba.new()
 		monument.position = CityBuilder.to_world(lumumba_poi["x"], lumumba_poi["y"])
 		city.add_child(monument)
 	_add_place_labels()
+	for fb in city.data.get("footbridges", []):
+		var pas := Passerelle.new().setup(Vector2(fb["a"][0], fb["a"][1]), Vector2(fb["b"][0], fb["b"][1]))
+		city.add_child(pas)
 
 	player = Player.new()
 	player.name = "Joueur"
@@ -45,6 +50,8 @@ func _ready() -> void:
 	player.global_position = CityBuilder.to_world(spawn.x, spawn.y, 1.0)
 	player.look(deg_to_rad(200), 0.0)
 
+	_tower.player = player
+	_tower.hint.connect(hud.show_hint)
 	traffic = Traffic.new()
 	add_child(traffic)
 	traffic.setup(city, player)
@@ -63,6 +70,7 @@ func _ready() -> void:
 ## prend une capture d'écran après le chargement puis quitte.
 func _handle_test_args() -> void:
 	var capture := ""
+	var portrait := false
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--capture="):
 			capture = arg.trim_prefix("--capture=")
@@ -70,6 +78,11 @@ func _handle_test_args() -> void:
 			hud.world_map.open()
 			hud.world_map._zoom = 0.6
 			hud.world_map.waypoint = Vector2(256.0, 845.0)
+		elif arg == "--mapfull":
+			hud.world_map.open()
+			hud.world_map._zoom = 0.155
+			hud.world_map._center = Vector2(-380.0, 1040.0)
+			hud.world_map.queue_redraw()
 		elif arg == "--map3d":
 			hud.world_map.open()
 			hud.world_map._zoom = 0.5
@@ -82,6 +95,10 @@ func _handle_test_args() -> void:
 			cam.global_position = CityBuilder.to_world(float(f[0]), float(f[1]), float(f[2]))
 			cam.rotation_degrees = Vector3(float(f[4]), float(f[3]), 0)
 			cam.current = true
+		elif arg == "--top":
+			player.global_position = Vector3(0, 158.5, 9.0)
+		elif arg == "--portrait":
+			portrait = true
 		elif arg.begins_with("--cam="):
 			var v := arg.trim_prefix("--cam=").split(",")
 			if v.size() == 4:
@@ -90,6 +107,15 @@ func _handle_test_args() -> void:
 	if capture.is_empty():
 		return
 	await get_tree().create_timer(4.0).timeout
+	if portrait:
+		var cam := Camera3D.new()
+		add_child(cam)
+		var fwd := -player.avatar.global_basis.z
+		cam.global_position = player.global_position + fwd * 1.4 + Vector3(0, 1.6, 0)
+		cam.look_at(player.global_position + Vector3(0, 1.5, 0))
+		cam.fov = 35.0
+		cam.current = true
+		await get_tree().create_timer(0.3).timeout
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(capture)
 	print("Capture : ", capture)

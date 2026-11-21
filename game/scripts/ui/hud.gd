@@ -10,6 +10,7 @@ var _money: Label
 var _objective: Label
 var _distance: Label
 var _timer: Label
+var _hint: Label
 var _notes: VBoxContainer
 var _dialog: PanelContainer
 var _dialog_title: Label
@@ -63,6 +64,9 @@ func _ready() -> void:
 	_timer = _label(30, Color(1, 0.45, 0.35))
 	_timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	obj_box.add_child(_timer)
+	_hint = _label(22, Color(0.6, 0.95, 1.0))
+	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	obj_box.add_child(_hint)
 
 	# Notifications (centre).
 	_notes = VBoxContainer.new()
@@ -153,8 +157,14 @@ func _process(_delta: float) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		else:
 			toggle_pause()
-	if _dialog.visible and Input.is_action_just_pressed("action"):
+	if _dialog.visible and (Input.is_action_just_pressed("action") or (player and player.touch_action)):
+		if player:
+			player.touch_action = false
 		missions.accept()
+
+
+func show_hint(text: String) -> void:
+	_hint.text = text
 
 
 func notify(text: String) -> void:

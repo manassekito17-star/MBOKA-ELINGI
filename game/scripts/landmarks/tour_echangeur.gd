@@ -29,11 +29,22 @@ var white := _mat(Color(0.93, 0.93, 0.92), 0.6)
 var lawn := _mat(Color(0.30, 0.48, 0.18), 1.0)
 
 
+## Ascenseur : en bas, devant le noyau central ; en haut, sur la plateforme.
+const LIFT_BOTTOM := Vector3(0, 0.5, 4.2)
+const LIFT_TOP := Vector3(0, COLUMN_HEIGHT - 0.4, 4.2)
+
+signal hint(text: String)
+
+var player: Player
+var _hint_shown := false
+
+
 func _ready() -> void:
 	_build_esplanade()
 	_build_columns()
 	_build_pods()
 	_build_top()
+	_build_lift()
 	_add_label()
 
 
@@ -162,6 +173,76 @@ func _build_top() -> void:
 	var tw := create_tween().set_loops()
 	tw.tween_property(bm, "emission_energy_multiplier", 0.2, 0.8)
 	tw.tween_property(bm, "emission_energy_multiplier", 4.0, 0.8)
+
+
+func _build_lift() -> void:
+	# Porte d'ascenseur lumineuse en bas et en haut.
+	for p in [LIFT_BOTTOM, LIFT_TOP]:
+		var door := BoxMesh.new()
+		door.size = Vector3(2.2, 2.6, 0.1)
+		var m := StandardMaterial3D.new()
+		m.albedo_color = Color(0.25, 0.22, 0.18)
+		m.emission_enabled = true
+		m.emission = Color(1.0, 0.75, 0.25)
+		m.emission_energy_multiplier = 0.6
+		_add(door, Vector3(p.x, p.y + 1.3, 3.05), m, false)
+		var l := Label3D.new()
+		l.text = "ASCENSEUR"
+		l.font_size = 48
+		l.pixel_size = 0.01
+		l.outline_size = 10
+		l.position = Vector3(p.x, p.y + 3.0, 3.15)
+		add_child(l)
+	# Plateforme panoramique praticable (sol + garde-corps invisibles).
+	var body := StaticBody3D.new()
+	add_child(body)
+	var half := COLUMN_OFFSET + COLUMN_RADIUS
+	var deck := CollisionShape3D.new()
+	var ds := BoxShape3D.new()
+	ds.size = Vector3(half * 2.0, 1.2, half * 2.0)
+	deck.shape = ds
+	deck.position = Vector3(0, COLUMN_HEIGHT - 1.0, 0)
+	body.add_child(deck)
+	for i in 4:
+		var b := Basis(Vector3.UP, i * PI / 2.0)
+		var wall := CollisionShape3D.new()
+		var ws := BoxShape3D.new()
+		ws.size = Vector3(half * 2.0, 1.3, 0.2)
+		wall.shape = ws
+		wall.transform = Transform3D(b, b * Vector3(0, COLUMN_HEIGHT + 0.25, half))
+		body.add_child(wall)
+		var rail := BoxMesh.new()
+		rail.size = Vector3(half * 2.0, 0.06, 0.06)
+		_add(rail, b * Vector3(0, COLUMN_HEIGHT + 0.9, half), steel, false, b)
+	# Collision du noyau (on ne traverse pas la tour).
+	var core := CollisionShape3D.new()
+	var cs := BoxShape3D.new()
+	cs.size = Vector3(6.0, COLUMN_HEIGHT - 4.0, 6.0)
+	core.shape = cs
+	core.position.y = (COLUMN_HEIGHT - 4.0) * 0.5
+	body.add_child(core)
+
+
+func _physics_process(_delta: float) -> void:
+	if player == null:
+		return
+	var p := player.global_position - global_position
+	var near_bottom := p.distance_to(LIFT_BOTTOM) < 3.0
+	var near_top := p.distance_to(LIFT_TOP) < 3.0
+	if near_bottom or near_top:
+		if not _hint_shown:
+			_hint_shown = true
+			hint.emit("Ascenseur : appuie sur E (ou ACTION) pour %s" % ("monter au sommet (158 m)" if near_bottom else "redescendre"))
+		if Input.is_action_just_pressed("action") or player.touch_action:
+			player.touch_action = false
+			var dest := LIFT_TOP + Vector3(0, 0.6, 2.5) if near_bottom else LIFT_BOTTOM + Vector3(0, 0.6, 12.0)
+			player.global_position = global_position + dest
+			player.velocity = Vector3.ZERO
+			_hint_shown = false
+			hint.emit("")
+	elif _hint_shown:
+		_hint_shown = false
+		hint.emit("")
 
 
 func _add_label() -> void:

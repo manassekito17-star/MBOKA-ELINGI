@@ -12,6 +12,7 @@ var _cam_finger := -1
 var _run := false
 var _btn_jump := Rect2()
 var _btn_run := Rect2()
+var _btn_act := Rect2()
 
 
 func _ready() -> void:
@@ -24,6 +25,7 @@ func _layout() -> void:
 	var b := clampf(s.y * 0.16, 70.0, 130.0)
 	_btn_jump = Rect2(s.x - b * 1.25, s.y - b * 1.35, b, b)
 	_btn_run = Rect2(s.x - b * 2.55, s.y - b * 1.0, b * 1.1, b * 0.75)
+	_btn_act = Rect2(s.x - b * 1.25, s.y - b * 2.55, b, b * 0.8)
 	joy_radius = clampf(s.y * 0.14, 60.0, 110.0)
 
 
@@ -35,6 +37,11 @@ func _input(event: InputEvent) -> void:
 		if event.pressed:
 			if _btn_jump.has_point(event.position):
 				player.touch_jump = true
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
+			if _btn_act.has_point(event.position):
+				player.touch_action = true
 				queue_redraw()
 				get_viewport().set_input_as_handled()
 				return
@@ -81,6 +88,9 @@ func _draw() -> void:
 	draw_circle(_btn_jump.get_center(), _btn_jump.size.x * 0.5, Color(0.1, 0.1, 0.1, 0.45))
 	draw_arc(_btn_jump.get_center(), _btn_jump.size.x * 0.5, 0, TAU, 32, Color(1, 1, 1, 0.7), 3.0)
 	draw_string(font, _btn_jump.get_center() + Vector2(-28, 8), "SAUT", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+	draw_rect(_btn_act, Color(0.1, 0.1, 0.1, 0.45))
+	draw_rect(_btn_act, Color(1, 0.85, 0.3, 0.8), false, 3.0)
+	draw_string(font, _btn_act.position + Vector2(8, _btn_act.size.y * 0.62), "ACTION", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
 	draw_rect(_btn_run, Color(0.95, 0.6, 0.1, 0.75) if _run else Color(0.1, 0.1, 0.1, 0.45))
 	draw_rect(_btn_run, Color(1, 1, 1, 0.7), false, 3.0)
 	draw_string(font, _btn_run.position + Vector2(10, _btn_run.size.y * 0.62), "COURIR", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)

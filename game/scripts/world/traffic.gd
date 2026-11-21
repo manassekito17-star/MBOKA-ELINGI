@@ -8,7 +8,7 @@ extends Node3D
 ## devant le joueur.
 
 const CAR_COUNT := 34
-const PED_COUNT := 26
+const PED_COUNT := 20
 const PED_VISIBLE := 140.0
 
 var city: CityBuilder
@@ -41,11 +41,7 @@ func setup(p_city: CityBuilder, p_player: Node3D) -> void:
 		if small_roads.is_empty():
 			break
 		var road: Dictionary = small_roads[_rng.randi() % small_roads.size()]
-		var a := Avatar.new().setup(
-			Color(0.25 + _rng.randf() * 0.15, 0.16 + _rng.randf() * 0.08, 0.10 + _rng.randf() * 0.05),
-			Color.from_hsv(_rng.randf(), 0.55 + _rng.randf() * 0.4, 0.6 + _rng.randf() * 0.4),
-			Color.from_hsv(_rng.randf(), 0.3, 0.15 + _rng.randf() * 0.35),
-			0.92 + _rng.randf() * 0.14)
+		var a := Avatar.new().randomize_look(_rng)
 		add_child(a)
 		_peds.append({
 			"node": a, "pts": road["pts"], "w": road["w"], "seg": _rng.randi() % maxi(1, road["pts"].size() - 1),
@@ -68,6 +64,8 @@ func _physics_process(delta: float) -> void:
 		var node: Avatar = p["node"]
 		var far := node.global_position.distance_to(pp) > PED_VISIBLE
 		node.visible = not far
+		if node.anim:
+			node.anim.active = not far
 		_advance(p, p["speed"] * delta, p["w"] * 0.5 + 0.9 * p["side"], node)
 		if not far:
 			node.animate(delta, p["speed"])
@@ -137,19 +135,45 @@ func _make_vehicle(kind: String) -> Node3D:
 			_box(root, Vector3(1.6, 0.55, 2.2), Vector3(0, 1.25, 0.2), Color(0.1, 0.12, 0.14))
 			_box(root, Vector3(1.62, 0.08, 2.2), Vector3(0, 1.55, 0.2), yellow)
 		"bus207":
-			# Taxi-bus « Esprit de mort » (fourgon Mercedes 207 jaune et bleu).
-			_box(root, Vector3(2.0, 1.9, 5.2), Vector3(0, 1.35, 0), yellow)
-			_box(root, Vector3(2.02, 0.35, 5.22), Vector3(0, 0.75, 0), Color(0.12, 0.25, 0.65))
-			_box(root, Vector3(2.04, 0.6, 3.6), Vector3(0, 1.75, 0.5), Color(0.1, 0.12, 0.14))
-			_box(root, Vector3(1.9, 0.6, 0.06), Vector3(0, 1.75, -2.61), Color(0.1, 0.12, 0.14))
+			# Minibus Mercedes 207/208 « Esprit de mort » : jaune (ou orange et vert),
+			# toit blanc, nez court, porte latérale ouverte.
+			var body := yellow if _rng.randf() < 0.8 else Color(0.92, 0.45, 0.10)
+			var lower := body if body == yellow else Color(0.15, 0.55, 0.35)
+			_box(root, Vector3(2.0, 1.55, 4.1), Vector3(0, 1.55, 0.45), body)
+			_box(root, Vector3(2.02, 0.55, 4.12), Vector3(0, 0.95, 0.45), lower)
+			_box(root, Vector3(1.96, 0.85, 1.0), Vector3(0, 0.95, -2.05), body)          # capot court
+			_box(root, Vector3(2.0, 0.12, 4.0), Vector3(0, 2.38, 0.45), Color(0.95, 0.95, 0.92))  # toit blanc
+			_box(root, Vector3(1.9, 0.75, 0.06), Vector3(0, 1.85, -1.58), Color(0.08, 0.1, 0.12))  # pare-brise
+			_box(root, Vector3(2.04, 0.6, 3.2), Vector3(0, 1.85, 0.75), Color(0.08, 0.1, 0.12))    # vitres
+			_box(root, Vector3(0.06, 1.5, 1.0), Vector3(1.01, 1.4, -0.6), Color(0.05, 0.05, 0.06)) # porte ouverte
+			_box(root, Vector3(2.05, 0.22, 0.15), Vector3(0, 0.6, -2.6), Color(0.1, 0.1, 0.1))     # pare-chocs
+			_box(root, Vector3(0.9, 0.35, 0.05), Vector3(0, 1.05, -2.56), Color(0.15, 0.15, 0.15)) # calandre
+			var logo := TorusMesh.new()
+			logo.inner_radius = 0.07
+			logo.outer_radius = 0.1
+			var lm := MeshInstance3D.new()
+			lm.mesh = logo
+			lm.rotation.x = PI / 2.0
+			lm.position = Vector3(0, 1.08, -2.6)
+			lm.material_override = _m(Color(0.9, 0.9, 0.9))
+			root.add_child(lm)
+			if _rng.randf() < 0.6:
+				# Le « chargeur » accroché à la porte.
+				var boy := Avatar.new().randomize_look(_rng)
+				boy.female = false
+				boy.pose = "Idle"
+				boy.position = Vector3(1.05, 0.35, -0.6)
+				root.add_child(boy)
 		"bus":
 			_box(root, Vector3(2.5, 2.7, 11.0), Vector3(0, 1.75, 0), Color(0.92, 0.92, 0.9))
 			_box(root, Vector3(2.52, 0.5, 11.02), Vector3(0, 0.75, 0), Color(0.10, 0.35, 0.70))
 			_box(root, Vector3(2.54, 0.9, 9.0), Vector3(0, 2.2, 0.6), Color(0.1, 0.12, 0.14))
 		"moto":
 			_box(root, Vector3(0.35, 0.6, 1.9), Vector3(0, 0.6, 0), Color(0.15, 0.15, 0.17))
-			var rider := Avatar.new().setup(Color(0.3, 0.2, 0.13), Color.from_hsv(_rng.randf(), 0.7, 0.8), Color(0.15, 0.15, 0.2), 0.95)
-			rider.position = Vector3(0, 0.15, 0.25)
+			var rider := Avatar.new().randomize_look(_rng)
+			rider.female = false
+			rider.pose = "Sitting_Idle"
+			rider.position = Vector3(0, 0.25, 0.35)
 			root.add_child(rider)
 		_:
 			var col: Color = [Color(0.95, 0.95, 0.95), Color(0.12, 0.12, 0.13), Color(0.65, 0.66, 0.68), Color(0.5, 0.08, 0.08)][_rng.randi() % 4]

@@ -16,6 +16,7 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9
 var touch_move := Vector2.ZERO
 var touch_run := false
 var touch_jump := false
+var touch_action := false
 
 var avatar: Avatar
 var camera: Camera3D
@@ -33,7 +34,14 @@ func _ready() -> void:
 	cs.position.y = 0.9
 	add_child(cs)
 
-	avatar = Avatar.new().setup(Color(0.33, 0.21, 0.14), Color(0.95, 0.55, 0.08), Color(0.12, 0.14, 0.24))
+	# Personnage principal (création originale) : tresses plaquées, boucle
+	# d'oreille, veste sombre à manches longues, baskets claires.
+	avatar = Avatar.new().setup(Color(0.27, 0.17, 0.11), Color(0.09, 0.10, 0.09), Color(0.10, 0.10, 0.12))
+	avatar.long_sleeves = true
+	avatar.high_collar = true
+	avatar.shoes = Color(0.85, 0.85, 0.82)
+	avatar.braids = true
+	avatar.earring = true
 	add_child(avatar)
 
 	_yaw = Node3D.new()

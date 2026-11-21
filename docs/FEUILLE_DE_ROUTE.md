@@ -3,7 +3,13 @@
 ## ✅ v0.1 : zone pilote Limete / Échangeur (livrée)
 Ville réelle générée depuis OpenStreetMap, Tour de l'Échangeur, monument Lumumba, circulation, 5 missions, mini-carte, grande carte 2D/3D, APK Android et installateur Windows.
 
-## v0.2 : Gombe, le fleuve et Brazzaville (prochaine étape)
+## ✅ v0.2 : Limete agrandie et réaliste (livrée)
+Carte de l'Échangeur à la 7e rue, 44 647 bâtiments, toits à deux pentes, murs de parcelles, lampadaires, vrais arbres, passerelles praticables, ascenseur de la Tour, personnages humains 3D animés, minibus 207.
+
+## v0.3 : centre-ville et bâtiments célèbres (prochaine étape)
+- **Lingwala / Kasa-Vubu / Gombe** : Hôpital du Cinquantenaire, Stade des Martyrs, Palais du Peuple, boulevard du 30 Juin, Tour Sozacom, Hôtel du Fleuve, cathédrale Notre-Dame du Congo, gare centrale. Chaque monument sera modélisé à la main d'après des photos.
+
+## v0.4 : Gombe, le fleuve et Brazzaville
 - **Gombe** : boulevard du 30 Juin, centre des affaires, bords du fleuve Congo.
 - **Traversée vers Brazzaville** : départ du port **Beach Ngobila** (Kinshasa), traversée du fleuve en **canot rapide** ou en bac, arrivée au **Beach de Brazzaville**. Contrôle des documents de voyage simulé.
 - **Brazzaville** : la Corniche, les tours jumelles de Mpila, la basilique Sainte-Anne. Données OpenStreetMap, avec vérification des noms et des positions.
@@ -11,7 +17,7 @@ Ville réelle générée depuis OpenStreetMap, Tour de l'Échangeur, monument Lu
 - **Langues** : lingala et français. Ajout progressif du kikongo, du swahili et du tshiluba (Kinshasa), puis du kituba (Brazzaville). Les dialogues seront relus par des locuteurs natifs.
 - **Carte plus complète** : ajout des contours de bâtiments de Microsoft (« Global ML Building Footprints », licence ODbL) là où OpenStreetMap est incomplet. Les cartes Bing, Google et autres ne peuvent pas être copiées (conditions d'utilisation).
 
-## v0.3 : personnages réalistes
+## Plus tard : personnages encore plus réalistes
 - Personnages humains réalistes et originaux (morphologies, visages, coiffures, tenues kinoises, Sape), riggés et animés : marche, course, conduite, gestes.
 - Pistes : MakeHuman (CC0), Blender, banques d'animations à licence compatible, ou un artiste 3D.
 - Illustrations originales pour l'écran de chargement, dans le style « affiche peinte » propre au jeu.
