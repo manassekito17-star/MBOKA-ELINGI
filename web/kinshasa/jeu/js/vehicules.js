@@ -9,9 +9,25 @@ export const TYPES = {
   voiture: { nom: "Berline", l: 4.5, w: 1.8, h: 1.45, masse: 1250, force: 2600, vmax: 45, empat: 2.7, voie: 1.55, r: 0.33, couleurs: [0xf2f2f2, 0x1b1c1e, 0x8d9196, 0x7a1515, 0x1d3a6b] },
   taxi: { nom: "Taxi jaune", l: 4.3, w: 1.75, h: 1.45, masse: 1150, force: 2400, vmax: 42, empat: 2.6, voie: 1.5, r: 0.32, couleurs: [0xf6c21c] },
   minibus: { nom: "Minibus 207 « Esprit de mort »", l: 5.4, w: 2.0, h: 2.4, masse: 2600, force: 3600, vmax: 33, empat: 3.2, voie: 1.7, r: 0.36, couleurs: [0xf6c21c] },
-  bus: { nom: "Bus urbain", l: 11.5, w: 2.5, h: 3.1, masse: 11000, force: 16000, vmax: 25, empat: 6.0, voie: 2.1, r: 0.5, couleurs: [0xeeeeee] },
+  bus: { nom: "Bus urbain (Transco)", l: 11.5, w: 2.5, h: 3.1, masse: 11000, force: 16000, vmax: 25, empat: 6.0, voie: 2.1, r: 0.5, couleurs: [0xeeeeee] },
   camion: { nom: "Camion", l: 8.5, w: 2.45, h: 3.2, masse: 9000, force: 14000, vmax: 24, empat: 4.8, voie: 2.0, r: 0.52, couleurs: [0xc0392b, 0x2c3e50, 0x27ae60] },
+  livraison: { nom: "Camionnette de livraison", l: 5.2, w: 2.0, h: 2.3, masse: 2300, force: 3400, vmax: 32, empat: 3.1, voie: 1.7, r: 0.36, couleurs: [0xf4f4f2, 0xd84315] },
+  ambulance: { nom: "Ambulance", l: 5.4, w: 2.0, h: 2.5, masse: 2700, force: 4000, vmax: 38, empat: 3.2, voie: 1.7, r: 0.36, couleurs: [0xf7f7f7] },
+  police: { nom: "Police", l: 4.6, w: 1.8, h: 1.5, masse: 1300, force: 2800, vmax: 45, empat: 2.7, voie: 1.55, r: 0.33, couleurs: [0x1a3a7a] },
   moto: { nom: "Moto (wewa)", l: 2.0, w: 0.7, h: 1.15, masse: 180, force: 900, vmax: 30, empat: 1.35, voie: 0.34, r: 0.3, couleurs: [0x111111, 0xb71c1c, 0x1565c0] },
+};
+
+/** Places assises (repère du véhicule) : conducteur puis passagers. */
+export const PLACES = {
+  voiture: [[-0.38, 0.32, 0.15], [0.38, 0.32, 0.15], [-0.38, 0.32, 1.1], [0.38, 0.32, 1.1]],
+  taxi: [[-0.38, 0.32, 0.15], [0.38, 0.32, 0.15], [-0.38, 0.32, 1.05], [0.38, 0.32, 1.05]],
+  police: [[-0.38, 0.32, 0.15], [0.38, 0.32, 0.15]],
+  minibus: [[-0.5, 0.65, -1.5], [0.5, 0.65, -1.5], [-0.5, 0.65, 0.2], [0.5, 0.65, 0.2], [-0.5, 0.65, 1.3], [0.5, 0.65, 1.3]],
+  livraison: [[-0.5, 0.65, -1.5], [0.5, 0.65, -1.5]],
+  ambulance: [[-0.5, 0.65, -1.6], [0.5, 0.65, -1.6]],
+  bus: [[-0.8, 0.8, -4.8], [-0.7, 0.8, -2.5], [0.7, 0.8, -2.5], [-0.7, 0.8, 0], [0.7, 0.8, 0], [-0.7, 0.8, 2.5], [0.7, 0.8, 2.5]],
+  camion: [[-0.6, 1.0, -3.3], [0.6, 1.0, -3.3]],
+  moto: [[0, 0.28, 0.12], [0, 0.36, 0.62]],
 };
 
 const mats = new Map();
@@ -36,17 +52,20 @@ export function modele(type, couleur) {
   const vitre = mat(0x1d262e, { metalness: 0.6, roughness: 0.1 });
   const noir = mat(0x151515);
   const L = t.l, W = t.w, H = t.h;
-  const phares = [];
+  const phares = [], arriere = [], gyro = [];
+  const matPhare = () => new THREE.MeshStandardMaterial({ color: 0xfff6d5, emissive: 0xfff2c0, emissiveIntensity: 0 });
+  const matStop = () => new THREE.MeshStandardMaterial({ color: 0x7a0000, emissive: 0xff1a1a, emissiveIntensity: 0.3 });
   if (type === "moto") {
     boite(g, 0.25, 0.35, 1.5, 0, 0.6, 0, carros);
     boite(g, 0.3, 0.12, 0.7, 0, 0.82, 0.25, noir);   // selle
     boite(g, 0.6, 0.05, 0.05, 0, 1.05, -0.6, noir);  // guidon
-    phares.push(boite(g, 0.16, 0.12, 0.05, 0, 0.85, -0.78, mat(0xfff6d5, { emissive: 0xfff2c0, emissiveIntensity: 0 })));
+    phares.push(boite(g, 0.16, 0.12, 0.05, 0, 0.85, -0.78, matPhare()));
+    arriere.push(boite(g, 0.14, 0.08, 0.04, 0, 0.8, 0.78, matStop()));
   } else {
     const bas = H * 0.5;
     boite(g, W, bas, L, 0, 0.35 + bas / 2, 0, carros);
     let cabL = L * 0.5, cabZ = 0.15, cabH = H - bas - 0.35;
-    if (type === "minibus" || type === "bus") { cabL = L * 0.92; cabZ = 0.1; cabH = H - bas - 0.35; }
+    if (["minibus", "bus", "livraison", "ambulance"].includes(type)) { cabL = L * 0.92; cabZ = 0.1; cabH = H - bas - 0.35; }
     if (type === "camion") { cabL = 2.2; cabZ = -L / 2 + 1.2; }
     boite(g, W * 0.94, cabH, cabL, 0, 0.35 + bas + cabH / 2, cabZ, carros);
     boite(g, W * 0.95, cabH * 0.62, cabL * 0.98, 0, 0.35 + bas + cabH * 0.5, cabZ, vitre);
@@ -58,10 +77,22 @@ export function modele(type, couleur) {
     }
     if (type === "taxi") boite(g, W * 0.95, 0.06, cabL * 0.95, 0, 0.35 + H - 0.32, cabZ, mat(0x1d4f9e));
     if (type === "bus") boite(g, W + 0.02, 0.45, L + 0.02, 0, 0.75, 0, mat(0x1565c0));
+    if (type === "ambulance") {
+      boite(g, W + 0.02, 0.28, L + 0.02, 0, 1.15, 0, mat(0xd32f2f));
+      boite(g, 0.6, 0.5, 0.05, W / 2 + 0.01, 1.7, 0.6, mat(0xd32f2f));      // croix (simplifiée)
+    }
+    if (type === "police") boite(g, W + 0.02, 0.18, L * 0.7, 0, 0.9, 0, mat(0xf2f2f2));
+    if (type === "livraison") boite(g, 0.05, 1.0, 2.0, W / 2 + 0.01, 1.4, 0.8, mat(0xd84315));
+    if (type === "ambulance" || type === "police") {
+      for (const [sx, c] of [[-0.3, 0x1e5bff], [0.3, 0xff2a2a]]) {
+        const m = new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0 });
+        gyro.push(m);
+        boite(g, 0.45, 0.14, 0.25, sx, 0.35 + H + 0.07, cabZ, m);
+      }
+    }
     for (const s of [-1, 1]) {
-      phares.push(boite(g, 0.32, 0.16, 0.05, s * (W / 2 - 0.3), 0.35 + bas * 0.7, -L / 2 - 0.01,
-        mat(0xfff6d5, { emissive: 0xfff2c0, emissiveIntensity: 0 })));
-      boite(g, 0.3, 0.14, 0.05, s * (W / 2 - 0.3), 0.35 + bas * 0.7, L / 2 + 0.01, mat(0x7a0000, { emissive: 0xff1a1a, emissiveIntensity: 0.3 }));
+      phares.push(boite(g, 0.32, 0.16, 0.05, s * (W / 2 - 0.3), 0.35 + bas * 0.7, -L / 2 - 0.01, matPhare()));
+      arriere.push(boite(g, 0.3, 0.14, 0.05, s * (W / 2 - 0.3), 0.35 + bas * 0.7, L / 2 + 0.01, matStop()));
     }
   }
   // Roues (animées).
@@ -81,7 +112,7 @@ export function modele(type, couleur) {
     g.add(pivot);
     roues.push({ pivot, roue: r });
   }
-  g.userData = { type, roues, phares };
+  g.userData = { type, roues, phares, arriere, gyro };
   return g;
 }
 

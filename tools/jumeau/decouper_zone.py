@@ -83,7 +83,11 @@ def main(zid, lat0, lon0, half, dem_path, out):
     print("Téléchargement Overture…")
     bats = q(f"""SELECT ST_AsWKB(geometry), sources[1].dataset, height, num_floors, names.primary, COALESCE(class, subtype)
                  FROM read_parquet('{R}/theme=buildings/type=building/*', hive_partitioning=1) WHERE {BB}""")
-    routes = q(f"""SELECT ST_AsWKB(geometry), class, names.primary FROM read_parquet('{R}/theme=transportation/type=segment/*', hive_partitioning=1)
+    # sens unique : accès interdit « en arrière » pour tous les usagers (Overture access_restrictions).
+    routes = q(f"""SELECT ST_AsWKB(geometry), class, names.primary,
+                   COALESCE(len(list_filter(access_restrictions, lambda x: x.access_type = 'denied'
+                        AND x."when".heading = 'backward' AND x."when".mode IS NULL)) > 0, false)
+                   FROM read_parquet('{R}/theme=transportation/type=segment/*', hive_partitioning=1)
                    WHERE {BB} AND subtype='road'""")
     lieux = q(f"""SELECT ST_AsWKB(geometry), names.primary, basic_category, confidence FROM read_parquet('{R}/theme=places/type=place/*', hive_partitioning=1)
                   WHERE {BB} AND names.primary IS NOT NULL""")
@@ -173,7 +177,7 @@ def main(zid, lat0, lon0, half, dem_path, out):
              "residential": 5.5, "living_street": 4.5, "service": 3.8, "track": 3.5, "path": 1.8,
              "footway": 2.0, "pedestrian": 4, "steps": 2.0, "cycleway": 2.0}
     reseau = []
-    for g, cls, name in routes:
+    for g, cls, name, sens_unique in routes:
         line = to_local(wkb.loads(bytes(g)), P)
         if line.is_empty:
             continue
@@ -183,7 +187,12 @@ def main(zid, lat0, lon0, half, dem_path, out):
             if part.length < 2 or part.geom_type != "LineString":
                 continue
             if cls in ("motorway", "trunk", "primary", "secondary", "tertiary", "unclassified", "residential"):
-                reseau.append({"p": [r1(v) for xy in part.coords for v in xy], "k": cls})
+                item_r = {"p": [r1(v) for xy in part.coords for v in xy], "k": cls}
+                if sens_unique:
+                    item_r["u"] = 1
+                if name:
+                    item_r["n"] = name
+                reseau.append(item_r)
             for i in range(nc):
                 for j in range(nc):
                     cb = box(-half + i * CHUNK, -half + j * CHUNK, -half + (i + 1) * CHUNK, -half + (j + 1) * CHUNK)

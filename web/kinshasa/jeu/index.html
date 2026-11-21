@@ -29,7 +29,14 @@
   <div id="hud">
     <div class="bloc"><span id="hud-heure">--:--</span><span id="hud-argent">--</span></div>
     <a id="hud-carte" class="bloc lien" href="../index.html">🌍 Vue satellite / carte</a>
+    <div class="boutons-hud">
+      <button id="btn-bus" class="bloc lien" title="Lignes de bus et horaires (B)">🚌 Lignes</button>
+      <button id="btn-perso" class="bloc lien" title="Éditeur de personnage (U)">👕 Personnage</button>
+    </div>
   </div>
+  <div id="hud-trafic"></div>
+  <div id="panneau-perso" class="panneau" hidden></div>
+  <div id="panneau-transports" class="panneau" hidden></div>
   <div id="hud-vitesse" hidden>
     <div><b id="vitesse">0</b> km/h</div>
     <div id="vehicule-nom"></div>
@@ -43,17 +50,20 @@
     <h2>Commandes</h2>
     <table>
       <tr><td>Z Q S D (AZERTY) / W A S D / flèches</td><td>Marcher · conduire</td></tr>
-      <tr><td>Maj</td><td>Courir</td></tr>
+      <tr><td>Maj (maintenir) · Alt · Ctrl</td><td>Courir puis sprinter · marcher lentement · s'accroupir</td></tr>
       <tr><td>Espace</td><td>Sauter · frein</td></tr>
       <tr><td>Souris (cliquer pour capturer)</td><td>Tourner la caméra</td></tr>
-      <tr><td>F</td><td>Monter / descendre d'un véhicule</td></tr>
-      <tr><td>C</td><td>Caméra intérieure / extérieure</td></tr>
+      <tr><td>V · C</td><td>Changer de caméra (3e/1re personne, aérienne, libre ; véhicule : poursuite, intérieure, aérienne)</td></tr>
+      <tr><td>F</td><td>Monter / descendre de vos véhicules</td></tr>
+      <tr><td>E</td><td>Prendre un bus (à l'arrêt), une moto-taxi ou un taxi · descendre · interagir</td></tr>
+      <tr><td>B · U</td><td>Lignes de bus et horaires · éditeur de personnage</td></tr>
+      <tr><td>G · K</td><td>Densité de circulation (faible, moyenne, intense) · provoquer un accident simulé</td></tr>
       <tr><td>L · H</td><td>Phares · klaxon</td></tr>
-      <tr><td>E</td><td>Interagir (commerce, station, restaurant)</td></tr>
-      <tr><td>T · N · G</td><td>Météo · avancer l'heure · densité de circulation</td></tr>
+      <tr><td>T · N</td><td>Météo · avancer l'heure (pointes : 6 h–9 h et 16 h–19 h)</td></tr>
       <tr><td>P · M</td><td>Sauvegarder · son</td></tr>
     </table>
-    <p class="note">Bâtiments, routes et lieux : données réelles. Circulation, piétons, prix et lampadaires : <b>simulés</b>.
+    <p class="note">Bâtiments, routes, lieux, ligne de bus 02, arrêts nommés et passages piétons : données réelles (OpenStreetMap / Overture).
+      Circulation, piétons, feux tricolores, ligne de minibus M1, arrêts « simulés », horaires, prix et lampadaires : <b>simulés</b>.
       Hauteur de la plupart des bâtiments : <b>estimée</b>.</p>
     <p id="attribution" class="note"></p>
   </div>
@@ -66,7 +76,8 @@
       <button data-touche="Space">⤒<small>saut</small></button>
       <button data-touche="frein">■<small>frein</small></button>
       <button data-touche="course">»<small>courir</small></button>
-      <button data-touche="KeyC">◎<small>caméra</small></button>
+      <button data-touche="KeyV">◎<small>caméra</small></button>
+      <button data-touche="ControlLeft">⤓<small>accroupi</small></button>
       <button data-touche="Escape">?<small>aide</small></button>
     </div>
   </div>

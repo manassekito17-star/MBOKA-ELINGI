@@ -53,6 +53,23 @@ export class Audio {
     o.start(); o.stop(ctx.currentTime + 0.4);
   }
 
+  /** Sirène (police, ambulance) : intensité 0..1 selon la distance. */
+  sirene(intensite) {
+    if (!this.actif) return;
+    const ctx = this.ctx;
+    if (!this.sireneOsc) {
+      this.sireneOsc = ctx.createOscillator();
+      this.sireneOsc.type = "triangle";
+      this.sireneGain = ctx.createGain();
+      this.sireneGain.gain.value = 0;
+      this.sireneOsc.connect(this.sireneGain).connect(this.maitre);
+      this.sireneOsc.start();
+    }
+    const t = ctx.currentTime;
+    this.sireneGain.gain.setTargetAtTime(0.08 * intensite, t, 0.2);
+    this.sireneOsc.frequency.setTargetAtTime(Math.floor(t * 1.5) % 2 ? 720 : 960, t, 0.05);
+  }
+
   mettreAJour(dt, { enVoiture, regime, pluie, nuit }) {
     if (!this.actif) return;
     const t = this.ctx.currentTime;

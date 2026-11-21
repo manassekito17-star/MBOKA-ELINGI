@@ -16,7 +16,8 @@ const assert = require("node:assert/strict");
     const j = window.__jeu;
     const p = j.etat.vehicule ? j.etat.vehicule.position() : j.joueur.position();
     return { x: p.x, z: p.z, mode: j.etat.mode, v: j.etat.vehicule ? j.etat.vehicule.vitesse() : 0,
-      tuiles: j.monde.tuiles.size, trafic: j.trafic.vehicules.length, pietons: j.trafic.pietons.length };
+      tuiles: j.monde.tuiles.size, trafic: j.sim.vehicules.length, pietons: j.sim.pietons.length,
+      rendus: j.rendu.actifs.size, pietonsRendus: j.rendu.pietonsActifs.size };
   });
   const verifier = (nom, cond) => { assert.ok(cond, nom); console.log("ok -", nom); };
 
@@ -31,7 +32,8 @@ const assert = require("node:assert/strict");
   await page.waitForTimeout(5000);
   const e0 = await etat();
   verifier("jeu : tuiles chargées autour du joueur", e0.tuiles >= 9);
-  verifier("jeu : circulation et piétons présents", e0.trafic > 0 && e0.pietons > 0);
+  verifier("jeu : circulation et piétons simulés", e0.trafic > 50 && e0.pietons > 50);
+  verifier("jeu : véhicules et piétons affichés autour du joueur", e0.rendus > 0 && e0.pietonsRendus > 0);
 
   // 3. Marche.
   await page.keyboard.down("KeyW"); await page.waitForTimeout(2000); await page.keyboard.up("KeyW");
@@ -52,7 +54,39 @@ const assert = require("node:assert/strict");
   await page.keyboard.press("KeyF"); await page.waitForTimeout(400);
   verifier("véhicule : le joueur descend", (await etat()).mode === "pied");
 
-  // 5. Sauvegarde.
+  // 5. Caméras (V) et accroupissement (Ctrl).
+  for (let i = 0; i < 4; i++) { await page.keyboard.press("KeyV"); await page.waitForTimeout(250); }
+  verifier("caméras : retour à la 3e personne après 4 changements", await page.evaluate(() => window.__jeu.etat.camPied === 0));
+  await page.keyboard.press("ControlLeft"); await page.waitForTimeout(300);
+  verifier("accroupi", await page.evaluate(() => window.__jeu.joueur.accroupi));
+  await page.keyboard.press("ControlLeft");
+
+  // 6. Éditeur de personnage : style « Sapeur ».
+  await page.click("#btn-perso");
+  await page.click('[data-style="sapeur"]');
+  await page.waitForTimeout(500);
+  verifier("éditeur : apparence appliquée et enregistrée", await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("kinshasa3d.personnage.v1")).haut === "#c2185b"));
+  await page.click("[data-fermer]");
+
+  // 7. Prendre une moto-taxi (simulée) comme passager, puis descendre.
+  const pris = await page.evaluate(() => {
+    const j = window.__jeu;
+    const p = j.joueur.position();
+    const m = j.sim.vehicules.filter((v) => v.type === "moto" && !v.client && !v.passagers.length && v.etat === "route")
+      .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+    if (!m) return false;
+    m.v = 0; m.etat = "arret"; m.minuterie = 5;
+    j.joueur.teleporter(m.x + 1.5, j.monde.hauteur(m.x, m.z) + 0.5, m.z);
+    j.rendu.mettreAJour(0.016, m.x, m.z, 0);
+    return j.prendreTransport();
+  });
+  verifier("moto-taxi : le joueur monte comme passager", pris && (await etat()).mode === "passager");
+  await page.waitForTimeout(4000);
+  await page.keyboard.press("KeyE"); await page.waitForTimeout(6000);
+  verifier("moto-taxi : le joueur redescend", (await etat()).mode === "pied");
+
+  // 8. Sauvegarde.
   await page.keyboard.press("KeyP"); await page.waitForTimeout(300);
   verifier("sauvegarde écrite", await page.evaluate(() => !!localStorage.getItem("kinshasa3d.sauvegarde.v1")));
 
