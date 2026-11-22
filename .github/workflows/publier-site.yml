@@ -1,0 +1,40 @@
+# Publication de Kinshasa 3D (carte + mode jeu) sur GitHub Pages.
+# Site 100 % statique : le dossier web/kinshasa est publié tel quel.
+# Prérequis (une seule fois) : Settings > Pages > Source : « GitHub Actions ».
+name: Publier le site web
+
+on:
+  push:
+    branches: [claude/funny-dijkstra-biuctf]
+    paths: ["web/kinshasa/**", ".github/workflows/publier-site.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Préparer le dossier publié (sans les tests ni les fichiers Node)
+        run: |
+          mkdir -p _site
+          cp -r web/kinshasa/. _site/
+          rm -rf _site/jeu/tests _site/jeu/node_modules _site/jeu/package.json _site/jeu/package-lock.json
+          du -sh _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploiement
+        uses: actions/deploy-pages@v4
