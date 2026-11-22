@@ -20,7 +20,7 @@ import * as THREE from "three";
 import { aleatoire } from "./geo.js";
 
 // Couleurs de façades relevées sur des photos de rues de Kinshasa (crépi peint).
-const PEINTURES = [0xf1ece0, 0xf4e3b5, 0xe9c98f, 0xd9a86c, 0xe8b8a6, 0xbcd6e6, 0x9fc6e0, 0xc4dfc2,
+export const PEINTURES = [0xf1ece0, 0xf4e3b5, 0xe9c98f, 0xd9a86c, 0xe8b8a6, 0xbcd6e6, 0x9fc6e0, 0xc4dfc2,
   0xa9cfa7, 0xf2f2ee, 0xe7d9c9, 0xd6b89a, 0xf0d27a, 0xf3c6a5];
 const TERRE_ROUGE = new THREE.Color(0x8a4a2c);   // éclaboussures de latérite au pied des murs
 const SIGNES = ["ALIMENTATION", "PHARMACIE", "QUINCAILLERIE", "SALON DE COIFFURE", "TRANSFERT D'ARGENT",
@@ -84,7 +84,7 @@ function rectangleOriente(pts) {
   return { centre, u, w, L, W, aire: r.aire };
 }
 
-function airePolygone(pts) {
+export function airePolygone(pts) {
   let a = 0;
   for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; }
   return a / 2;

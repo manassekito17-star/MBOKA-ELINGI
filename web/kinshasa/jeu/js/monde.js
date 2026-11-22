@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { Relief, aleatoire, dansPolygone } from "./geo.js";
 import { construireBatiments, construireDetails, fenetresLointaines, Lot } from "./architecture.js";
 import { construireArbres } from "./vegetation.js";
+import { construireClotures } from "./clotures.js";
 
 /** Couleur sRGB (0–1) -> linéaire, pour les couleurs de sommets. */
 function lin(r, g, b) {
@@ -167,6 +168,12 @@ export class Monde {
         corpsBat = r.corps; details = r.details;
         groupe.add(corpsBat);
         if (r.triangles.length) corps.push(this.physique.ajouterMaillageFixe(r.triangles));
+        // Murs de clôture et portails des parcelles (générés).
+        const cl = construireClotures(d, this.M, (x, z) => this.hauteur(x, z));
+        if (cl) {
+          groupe.add(cl.groupe);
+          if (cl.triangles.length) corps.push(this.physique.ajouterMaillageFixe(cl.triangles));
+        }
       } else if (d.b.length) {
         const { mesh, triangles } = this._batiments(d.b);
         groupe.add(mesh);

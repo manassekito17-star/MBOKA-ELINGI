@@ -16,6 +16,7 @@ export class Environnement {
     this.pluie01 = 0;
     this.ciel = new Sky();
     this.ciel.scale.setScalar(4500);
+    this.ciel.userData.sansAO = true;
     scene.add(this.ciel);
     const u = this.ciel.material.uniforms;
     u.turbidity.value = 6; u.rayleigh.value = 1.6; u.mieCoefficient.value = 0.006; u.mieDirectionalG.value = 0.8;
@@ -67,6 +68,7 @@ export class Environnement {
     this.nuages = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), this.matNuages);
     this.nuages.rotation.x = Math.PI / 2;
     this.nuages.position.y = 900;
+    this.nuages.userData.sansAO = true;
     this.scene.add(this.nuages);
   }
 

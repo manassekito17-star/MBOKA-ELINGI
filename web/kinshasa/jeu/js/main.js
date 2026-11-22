@@ -19,6 +19,7 @@ import { editeurPersonnage, panneauTransports, panneauZones, chargerApparence } 
 import * as Sauvegarde from "./sauvegarde.js";
 import { ZONES, ZONE_DEFAUT } from "./zones.js";
 import { Materiaux } from "./materiaux.js";
+import { creerPostTraitement } from "./posttraitement.js";
 
 const params = new URLSearchParams(location.search);
 const mobile = matchMedia("(pointer: coarse)").matches;
@@ -70,12 +71,14 @@ async function demarrer() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   $("jeu").appendChild(renderer.domElement);
   const scene = new THREE.Scene();
+  let post = null;   // post-traitement (qualité haute)
   const camera = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.15, 5000);
   scene.add(camera);
   addEventListener("resize", () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
+    post?.taille(innerWidth, innerHeight);
   });
 
   $("chargement-zone").textContent = `Zone jouable : ${CONFIG.nom} (${CONFIG.description}, données réelles)`;
@@ -410,6 +413,8 @@ async function demarrer() {
   progression("Préparation de l'affichage…", 0.9);
   env.mettreAJour(0, joueur.position(), camera, monde.lampadaires);
   try { await renderer.compileAsync(scene, camera); } catch { /* navigateur sans compilation asynchrone */ }
+  // Qualité haute (PC à carte graphique) : occlusion ambiante, halo des lumières, anticrénelage.
+  post = QUALITE === "haute" && params.get("post") !== "0" ? await creerPostTraitement(renderer, scene, camera) : null;
   renderer.render(scene, camera);
   $("chargement").hidden = true;
   message(`Bienvenue à ${CONFIG.court} ! Z/W Q/A S D : marcher · Maj : courir · Alt : marcher lentement · Ctrl : s'accroupir · F : vos véhicules · E : bus, moto-taxi, interagir · V : caméra · Échap : aide`, 8);
@@ -572,7 +577,7 @@ async function demarrer() {
     images++; tIps += dt;
     if (tIps >= 1) { ips = images; images = 0; tIps = 0; }
     ctl.finImage();
-    renderer.render(scene, camera);
+    if (post) post.rendre(env.estNuit()); else renderer.render(scene, camera);
   }
   boucle();
 }

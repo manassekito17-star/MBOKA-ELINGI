@@ -127,6 +127,32 @@ Toujours des modèles construits en code, mais beaucoup plus détaillés :
 - **ambulance** et **police** avec gyrophares ;
 - **moto** avec réservoir, fourche, phare rond et pot d'échappement.
 
+### 2.7 Murs de clôture et portails des parcelles (`js/clotures.js`)
+
+La plupart des rues de quartier de Kinshasa sont bordées de murs de parcelle, percés d'un portail métallique. Aucune donnée de parcelle n'existe, donc ces murs sont **générés** (positions estimées).
+
+Règles de placement :
+- un mur est placé devant chaque maison dont la **façade** est à plus de 4,2 m du bord de la chaussée ;
+- le mur est à **3 m du bord de chaussée**, derrière l'espace où marchent les piétons simulés ;
+- il est en parpaings bruts ou en crépi peint, avec un chaperon en béton.
+
+Les murs voisins d'un même côté de rue sont fusionnés, et ils s'interrompent devant tout bâtiment et toute autre rue.
+
+Portails :
+- un portail métallique de couleur entre deux piliers en béton, pour chaque parcelle assez large ;
+- une petite parcelle sur deux n'en a pas, car l'accès est souvent partagé.
+
+Les murs et les portails ont des **collisions** : on ne les traverse pas.
+
+### 2.8 Post-traitement (qualité « haute » seulement)
+
+`js/posttraitement.js` :
+- occlusion ambiante d'écran (GTAO) : coins, pieds de murs et dessous des toits plus sombres ;
+- halo des lumières (bloom), plus fort la nuit ;
+- anticrénelage SMAA.
+
+Ces effets ne sont chargés qu'en qualité « haute » (`?qualite=haute`), et se désactivent avec `?post=0`. Ils sont trop coûteux pour une carte graphique intégrée ou un téléphone.
+
 ---
 
 ## 3. Mesures (avant / après)
@@ -203,8 +229,8 @@ Les durées de marche et de conduite des tests ont donc été allongées (2 → 
 - **Hauteurs** : la plupart sont **estimées** d'après la surface au sol (moins de 2 % sont documentées). Le centre de la Gombe paraît donc plus bas qu'en réalité.
 - **Styles générés** : le type, la couleur et la toiture sont **déduits**, pas relevés bâtiment par bâtiment. Une maison peut avoir une autre couleur ou un autre toit qu'en vrai.
 - **Ouvertures non découpées** : les fenêtres sont posées sur le mur (cadre et vitre en saillie) et non découpées dans le mur. Il n'y a pas d'intérieurs.
-- **Parcelles et clôtures** : les murs de clôture et portails des parcelles ne sont **pas** générés, car aucune donnée de parcelles n'est disponible.
+- **Parcelles et clôtures** : les murs et portails sont **générés** devant les maisons, pas relevés (aucune donnée de parcelle). Les murs mitoyens entre parcelles et les murs de fond ne sont pas représentés.
 - **Véhicules** : ils restent construits en code. Pour atteindre le niveau GTA V, il faut des modèles faits par un artiste 3D, sous une licence qui permet leur usage.
 - **Personnages** : il n'existe pas de modèles « AAA » libres d'utilisation. Les modèles Quaternius (CC0) n'ont pas d'expressions faciales. Il faudrait des modèles de type MetaHuman, mais leur licence est réservée à Unreal Engine, ou des personnages faits sur commande.
-- **Post-traitement** : il n'y a pas encore d'occlusion ambiante d'écran ni de halo lumineux (bloom). C'est possible en qualité « haute » sur PC, mais coûteux pour un ordinateur à carte graphique intégrée.
+- **Post-traitement** : il est disponible seulement en qualité « haute ». Il n'a pas été mesuré sur une vraie carte graphique.
 - **Performances** : aucun test sur un vrai téléphone ni sur un vrai PC. Le rendu logiciel de test est d'environ 2 fois plus lent qu'avant, à cause des textures et des détails. En qualité « basse » (téléphone), les détails en relief sont désactivés et les textures sont réduites.
