@@ -26,13 +26,27 @@ jobs:
       url: ${{ steps.deploiement.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      # La carte (.pmtiles), le relief (.png) et les personnages (.gltf/.glb) sont dans Git LFS.
+      # Cache : évite de retélécharger ~90 Mo à chaque publication (quota LFS gratuit limité).
+      - name: Liste des fichiers LFS
+        run: git lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-ids
+      - uses: actions/cache@v4
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-ids') }}
+          restore-keys: lfs-
+      - name: Récupérer les fichiers LFS
+        run: git lfs pull && git lfs checkout
       - name: Préparer le dossier publié (sans les tests ni les fichiers Node)
         run: |
           mkdir -p _site
           cp -r web/kinshasa/. _site/
           rm -rf _site/jeu/tests _site/jeu/node_modules _site/jeu/package.json _site/jeu/package-lock.json
           du -sh _site
-      - uses: actions/configure-pages@v5
+          # Vérification : aucun fichier ne doit être resté un simple pointeur LFS.
+          if grep -rl --include='*.pmtiles' --include='*.png' --include='*.gltf' --include='*.glb' '^version https://git-lfs' _site; then
+            echo "Fichiers LFS non récupérés" && exit 1
+          fi      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
