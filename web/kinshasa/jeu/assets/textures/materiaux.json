@@ -1,0 +1,136 @@
+{
+ "crepi": {
+  "source": "https://polyhaven.com/a/plastered_wall_02",
+  "auteurs": [
+   "Charlotte Baglioni"
+  ],
+  "licence": "CC0",
+  "taille_m": 2.23
+ },
+ "crepi_use": {
+  "source": "https://polyhaven.com/a/grey_plaster_02",
+  "auteurs": [
+   "Rob Tuytel"
+  ],
+  "licence": "CC0",
+  "taille_m": 1.0
+ },
+ "beton": {
+  "source": "https://polyhaven.com/a/concrete_wall_008",
+  "auteurs": [
+   "Dario Barresi",
+   "Charlotte Baglioni"
+  ],
+  "licence": "CC0",
+  "taille_m": 2.71
+ },
+ "parpaing": {
+  "source": "https://polyhaven.com/a/concrete_block_wall",
+  "auteurs": [
+   "Charlotte Baglioni"
+  ],
+  "licence": "CC0",
+  "taille_m": 2.0
+ },
+ "brique": {
+  "source": "https://polyhaven.com/a/red_bricks_04",
+  "auteurs": [
+   "Rob Tuytel"
+  ],
+  "licence": "CC0",
+  "taille_m": 2.5
+ },
+ "tole": {
+  "source": "https://polyhaven.com/a/corrugated_iron",
+  "auteurs": [
+   "Jenelle van Heerden",
+   "Dimitrios Savva"
+  ],
+  "licence": "CC0",
+  "taille_m": 1.12
+ },
+ "tole_rouille": {
+  "source": "https://polyhaven.com/a/corrugated_iron_02",
+  "auteurs": [
+   "Jenelle van Heerden",
+   "Sergej Majboroda"
+  ],
+  "licence": "CC0",
+  "taille_m": 2.7
+ },
+ "tuile": {
+  "source": "https://polyhaven.com/a/clay_roof_tiles_02",
+  "auteurs": [
+   "Amal Kumar"
+  ],
+  "licence": "CC0",
+  "taille_m": 2.5
+ },
+ "asphalte": {
+  "source": "https://polyhaven.com/a/asphalt_02",
+  "auteurs": [
+   "Rob Tuytel"
+  ],
+  "licence": "CC0",
+  "taille_m": 3.0
+ },
+ "laterite": {
+  "source": "https://polyhaven.com/a/red_laterite_soil_stones",
+  "auteurs": [
+   "Amal Kumar"
+  ],
+  "licence": "CC0",
+  "taille_m": 2.0
+ },
+ "terre": {
+  "source": "https://polyhaven.com/a/red_dirt_mud_01",
+  "auteurs": [
+   "Rob Tuytel"
+  ],
+  "licence": "CC0",
+  "taille_m": 1.5
+ },
+ "paves": {
+  "source": "https://polyhaven.com/a/concrete_pavers",
+  "auteurs": [
+   "Amal Kumar"
+  ],
+  "licence": "CC0",
+  "taille_m": 1.92
+ },
+ "herbe": {
+  "source": "https://polyhaven.com/a/leafy_grass",
+  "auteurs": [
+   "Charlotte Baglioni"
+  ],
+  "licence": "CC0",
+  "taille_m": 2.0
+ },
+ "rideau": {
+  "source": "https://polyhaven.com/a/painted_metal_shutter",
+  "auteurs": [
+   "Dario Barresi",
+   "Rico Cilliers",
+   "Charlotte Baglioni"
+  ],
+  "licence": "CC0",
+  "taille_m": 2.0
+ },
+ "metal": {
+  "source": "https://polyhaven.com/a/green_metal_rust",
+  "auteurs": [
+   "Rob Tuytel"
+  ],
+  "licence": "CC0",
+  "taille_m": 1.0
+ },
+ "ecorce_palmier": {
+  "source": "https://polyhaven.com/a/palm_tree_bark",
+  "auteurs": [
+   "Dimitrios Savva",
+   "Rico Cilliers"
+  ],
+  "licence": "CC0",
+  "taille_m": 1.3
+ }
+}

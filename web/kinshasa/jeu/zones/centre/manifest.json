@@ -2177,6 +2177,15 @@
   "satellite": 25973,
   "hauteur_documentee": 70,
   "ignores": 7,
+  "revetements": {
+   "None": 1664,
+   "dirt": 105,
+   "paved": 735,
+   "unpaved": 31,
+   "paving_stones": 4,
+   "gravel": 14,
+   "unknown": 5
+  },
   "arbres_reels": 73,
   "arbres_estimes": 898,
   "routes": 2211,

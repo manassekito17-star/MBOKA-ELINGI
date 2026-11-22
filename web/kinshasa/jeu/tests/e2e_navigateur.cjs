@@ -10,6 +10,8 @@ const assert = require("node:assert/strict");
   const navigateur = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
   const page = await navigateur.newPage({ viewport: { width: 1280, height: 720 } });
   const erreurs = [];
+  // Pile d'appel jointe aux erreurs de la console (pour savoir d'où elles viennent).
+  await page.addInitScript(() => { const e = console.error; console.error = (...a) => e(...a, "| pile : " + (new Error().stack || "").split("\n").slice(2, 6).map((l) => l.trim()).join(" < ")); });
   page.on("pageerror", (e) => erreurs.push(e.message));
   page.on("console", (m) => { if (m.type() === "error") erreurs.push(m.text()); });
   const etat = () => page.evaluate(() => {
@@ -36,7 +38,7 @@ const assert = require("node:assert/strict");
   verifier("jeu : véhicules et piétons affichés autour du joueur", e0.rendus > 0 && e0.pietonsRendus > 0);
 
   // 3. Marche.
-  await page.keyboard.down("KeyW"); await page.waitForTimeout(2000); await page.keyboard.up("KeyW");
+  await page.keyboard.down("KeyW"); await page.waitForTimeout(4000); await page.keyboard.up("KeyW");
   const e1 = await etat();
   verifier("marche : le joueur se déplace", Math.hypot(e1.x - e0.x, e1.z - e0.z) > 0.5);
 
@@ -46,7 +48,8 @@ const assert = require("node:assert/strict");
   await page.keyboard.press("KeyF"); await page.waitForTimeout(500);
   verifier("véhicule : le joueur conduit", (await etat()).mode === "conduite");
   const e2 = await etat();
-  await page.keyboard.down("KeyW"); await page.waitForTimeout(3000); await page.keyboard.up("KeyW");
+  // (5 s : le rendu logiciel de test, sans carte graphique, fait tourner le jeu au ralenti)
+  await page.keyboard.down("KeyW"); await page.waitForTimeout(5000); await page.keyboard.up("KeyW");
   const e3 = await etat();
   verifier("conduite : le véhicule avance", Math.hypot(e3.x - e2.x, e3.z - e2.z) > 0.5);
   await page.keyboard.down("Space"); await page.waitForTimeout(4000); await page.keyboard.up("Space");
@@ -99,7 +102,7 @@ const assert = require("node:assert/strict");
   verifier("Gombe : zone chargée", g.titre.includes("Gombe") && eg.tuiles >= 9);
   verifier("Gombe : lignes réelles 02, 06B et 11", ["02", "06B", "11"].every((r) => g.lignes.includes(r)));
   verifier("Gombe : circulation affichée autour du joueur", eg.trafic > 50 && eg.rendus > 0 && eg.pietonsRendus > 0);
-  await page.keyboard.down("KeyW"); await page.waitForTimeout(3000); await page.keyboard.up("KeyW");
+  await page.keyboard.down("KeyW"); await page.waitForTimeout(6000); await page.keyboard.up("KeyW");
   const eg2 = await etat();
   verifier("Gombe : le joueur marche", Math.hypot(eg2.x - eg.x, eg2.z - eg.z) > 1);
   await page.keyboard.press("KeyP"); await page.waitForTimeout(300);
@@ -137,6 +140,7 @@ const assert = require("node:assert/strict");
   await page.waitForFunction(() => window.__jeu, null, { timeout: 120000 });
   verifier("changement de zone : retour à Limete", (await page.title()).includes("Limete"));
 
+  if (erreurs.length) console.log("Erreurs JavaScript :\n  " + erreurs.join("\n  "));
   verifier("aucune erreur JavaScript", erreurs.length === 0);
   await navigateur.close();
   console.log("Tous les tests navigateur sont passés.");

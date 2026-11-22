@@ -18,6 +18,7 @@
   "nz": 251,
   "base_m": 278.5
  },
+ "monuments": {},
  "tuiles": [
   {
    "i": 0,
@@ -5521,6 +5522,15 @@
   "satellite": 33418,
   "hauteur_documentee": 609,
   "ignores": 0,
+  "revetements": {
+   "None": 2781,
+   "paving_stones": 17,
+   "paved": 1158,
+   "dirt": 123,
+   "unpaved": 45,
+   "unknown": 7,
+   "gravel": 16
+  },
   "arbres_reels": 105,
   "arbres_estimes": 4243,
   "routes": 3158,

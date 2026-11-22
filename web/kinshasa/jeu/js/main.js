@@ -18,6 +18,7 @@ import { RenduCirculation } from "./simulation/rendu.js";
 import { editeurPersonnage, panneauTransports, panneauZones, chargerApparence } from "./interface.js";
 import * as Sauvegarde from "./sauvegarde.js";
 import { ZONES, ZONE_DEFAUT } from "./zones.js";
+import { Materiaux } from "./materiaux.js";
 
 const params = new URLSearchParams(location.search);
 const mobile = matchMedia("(pointer: coarse)").matches;
@@ -80,11 +81,14 @@ async function demarrer() {
   $("chargement-zone").textContent = `Zone jouable : ${CONFIG.nom} (${CONFIG.description}, données réelles)`;
   document.title = `Kinshasa 3D — ${CONFIG.court}`;
   progression(`Carte réelle de ${CONFIG.court}…`, 0.15);
-  const monde = new Monde(scene, physique, `zones/${ZONE}/`, QUALITE);
+  // Matériaux photographiques (désactivables : ?rendu=simple, pour comparer avec l'ancien rendu).
+  const materiaux = params.get("rendu") === "simple" ? null : new Materiaux(renderer, QUALITE);
+  if (materiaux) await materiaux.charger();
+  const monde = new Monde(scene, physique, `zones/${ZONE}/`, QUALITE, materiaux);
   const manifest = await monde.charger();
   const transports = await (await fetch(`zones/${ZONE}/transports.json`)).json().catch(() => null);
   const proj = new Projection(manifest.origine[0], manifest.origine[1]);
-  $("attribution").textContent = manifest.attribution + " · Transports : " + (transports?.source || "—") + " · Personnages : Quaternius (CC0)";
+  $("attribution").textContent = manifest.attribution + " · Transports : " + (transports?.source || "—") + " · Personnages : Quaternius (CC0) · Textures : Poly Haven (CC0)";
 
   progression("Personnages et animations…", 0.3);
   await chargerPersonnages();
@@ -401,13 +405,19 @@ async function demarrer() {
   // --- Boucle ------------------------------------------------------------------------
   const horloge = new THREE.Clock();
   let tMonde = 0, tSauve = 0, tHud = 0, images = 0, ips = 0, tIps = 0, pharesNuit = null;
+  // Préparation graphique pendant l'écran de chargement : reflets du ciel et compilation des
+  // shaders des matériaux (sinon les premières secondes de jeu sont saccadées).
+  progression("Préparation de l'affichage…", 0.9);
+  env.mettreAJour(0, joueur.position(), camera, monde.lampadaires);
+  try { await renderer.compileAsync(scene, camera); } catch { /* navigateur sans compilation asynchrone */ }
+  renderer.render(scene, camera);
   $("chargement").hidden = true;
   message(`Bienvenue à ${CONFIG.court} ! Z/W Q/A S D : marcher · Maj : courir · Alt : marcher lentement · Ctrl : s'accroupir · F : vos véhicules · E : bus, moto-taxi, interagir · V : caméra · Échap : aide`, 8);
   const unGeste = () => { audio.demarrer(); removeEventListener("pointerdown", unGeste); removeEventListener("keydown", unGeste); };
   addEventListener("pointerdown", unGeste);
   addEventListener("keydown", unGeste);
 
-  window.__jeu = { etat, joueur, flotte, env, monde, camera, sim, rendu, entrerSortir, sauvegarder, prendreTransport, interagir, monuments, ctl };
+  window.__jeu = { etat, joueur, flotte, env, monde, camera, sim, rendu, entrerSortir, sauvegarder, prendreTransport, interagir, monuments, ctl, renderer, scene };
 
   function boucle() {
     requestAnimationFrame(boucle);
@@ -488,6 +498,12 @@ async function demarrer() {
     rendu.mettreAJour(dt, pj.x, pj.z, nuit);
     if (pharesNuit !== nuit > 0.5) { pharesNuit = nuit > 0.5; rendu.phares(pharesNuit); }
     if (monde.uNuit) monde.uNuit.value = nuit;
+    if (materiaux) {
+      materiaux.uniformes.uNuit.value = nuit;
+      // Sol mouillé : monte avec la pluie, sèche lentement ensuite.
+      const u = materiaux.uniformes.uMouille;
+      u.value += ((env.pluie01 > 0.2 ? 1 : 0) - u.value) * Math.min(1, dt * (env.pluie01 > 0.2 ? 0.2 : 0.02));
+    }
     monde.lampeMat.emissiveIntensity = nuit > 0.3 ? 3 * nuit : 0;
     if (etat.vehicule && nuit > 0.5 && !etat.vehicule.phares && !etat._pharesAuto) { etat.vehicule.allumerPhares(true); etat._pharesAuto = true; }
     if (nuit < 0.3) etat._pharesAuto = false;

@@ -3,6 +3,7 @@
 // Modèles 3D construits en code (créations originales, aucune marque réelle).
 import * as THREE from "three";
 import { RAPIER } from "./physique.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 /** Caractéristiques : dimensions (m), masse (kg), puissance, empattement, voie. */
 export const TYPES = {
@@ -44,76 +45,228 @@ function boite(g, sx, sy, sz, x, y, z, m) {
   return b;
 }
 
-/** Modèle 3D : l'avant du véhicule est vers -Z. */
+/** Plaque d'immatriculation (numéro fictif, format générique). */
+let texPlaque = null;
+function plaque() {
+  if (texPlaque || typeof document === "undefined") return texPlaque;   // (tests Node : pas de canevas)
+  const c = document.createElement("canvas");
+  c.width = 256; c.height = 64;
+  const x = c.getContext("2d");
+  x.fillStyle = "#f4f4ef"; x.fillRect(0, 0, 256, 64);
+  x.fillStyle = "#1d4fa0"; x.fillRect(0, 0, 34, 64);
+  x.fillStyle = "#f7d618"; x.font = "bold 18px sans-serif"; x.fillText("CD", 4, 40);
+  x.fillStyle = "#111"; x.font = "bold 40px sans-serif"; x.textBaseline = "middle"; x.fillText("0000 KN", 44, 34);
+  texPlaque = new THREE.CanvasTexture(c);
+  texPlaque.colorSpace = THREE.SRGBColorSpace;
+  return texPlaque;
+}
+
+/** Profil latéral (z, y) extrudé sur la largeur, arêtes arrondies (biseau). Avant vers -Z. */
+function profil(points, largeur, biseau = 0.07) {
+  const sh = new THREE.Shape(points.map(([z, y]) => new THREE.Vector2(z, y)));
+  const g = new THREE.ExtrudeGeometry(sh, { depth: Math.max(0.01, largeur - 2 * biseau), bevelEnabled: true, bevelThickness: biseau,
+    bevelSize: biseau, bevelSegments: 3, curveSegments: 6 });
+  g.rotateY(-Math.PI / 2).translate((largeur - 2 * biseau) / 2, 0, 0);
+  return g;
+}
+
+/** Silhouettes (côté) par famille de véhicule : [bas de caisse], [vitrage], hauteur du toit. */
+function silhouettes(type, L, H) {
+  const a = -L / 2, b = L / 2;
+  if (["voiture", "taxi", "police"].includes(type)) {
+    const ceinture = 0.95, toit = H;
+    return {
+      caisse: [[a, 0.32], [a, 0.62], [a + 0.12, 0.78], [a + 1.0, 0.86], [a + 1.35, ceinture], [b - 0.95, ceinture], [b - 0.2, 0.9], [b, 0.78], [b, 0.36], [b - 0.25, 0.3], [a + 0.25, 0.3]],
+      vitre: [[a + 1.35, ceinture - 0.02], [a + 2.05, toit - 0.04], [b - 1.45, toit - 0.04], [b - 0.95, ceinture - 0.02]],
+      toit: [a + 2.0, b - 1.45, toit],
+      montants: [a + 1.7, b - 1.2, (a + 2.05 + b - 1.45) / 2],
+    };
+  }
+  if (["minibus", "livraison", "ambulance"].includes(type)) {
+    const ceinture = 1.25;
+    return {
+      caisse: [[a, 0.32], [a, 0.75], [a + 0.3, 1.05], [a + 0.75, ceinture], [b, ceinture], [b, 0.36], [b - 0.25, 0.3], [a + 0.25, 0.3]],
+      vitre: [[a + 0.75, ceinture - 0.02], [a + 1.25, H - 0.08], [b - 0.05, H - 0.08], [b - 0.05, ceinture - 0.02]],
+      toit: [a + 1.2, b, H],
+      montants: [a + 1.45, a + 2.6, b - 1.2],
+    };
+  }
+  if (type === "bus") {
+    return {
+      caisse: [[a, 0.35], [a, 1.25], [b, 1.25], [b, 0.35], [b - 0.3, 0.3], [a + 0.3, 0.3]],
+      vitre: [[a + 0.05, 1.23], [a + 0.12, H - 0.25], [b - 0.05, H - 0.25], [b - 0.05, 1.23]],
+      toit: [a + 0.05, b - 0.02, H],
+      montants: Array.from({ length: 8 }, (_, i) => a + 1.2 + i * (L - 2) / 8),
+    };
+  }
+  // Camion : cabine avant (la caisse arrière est ajoutée à part).
+  return {
+    caisse: [[a, 0.4], [a, 1.35], [a + 2.2, 1.35], [a + 2.2, 0.4]],
+    vitre: [[a + 0.05, 1.33], [a + 0.25, H - 0.4], [a + 2.15, H - 0.4], [a + 2.15, 1.33]],
+    toit: [a + 0.2, a + 2.2, H - 0.25],
+    montants: [a + 1.4],
+  };
+}
+
+/** Modèle 3D détaillé : l'avant du véhicule est vers -Z. Créations originales (aucune marque). */
 export function modele(type, couleur) {
   const t = TYPES[type];
   const g = new THREE.Group();
-  const carros = mat(couleur, { metalness: 0.45, roughness: 0.35 });
-  const vitre = mat(0x1d262e, { metalness: 0.6, roughness: 0.1 });
-  const noir = mat(0x151515);
+  const carros = mat(couleur, { metalness: 0.55, roughness: 0.28, envMapIntensity: 1.2 });
+  const vitre = mat(0x101820, { metalness: 0.9, roughness: 0.05, envMapIntensity: 1.5 });
+  const noir = mat(0x141414, { roughness: 0.7, metalness: 0.1 });
+  const chrome = mat(0xc9ccd0, { metalness: 0.95, roughness: 0.18 });
   const L = t.l, W = t.w, H = t.h;
   const phares = [], arriere = [], gyro = [];
-  const matPhare = () => new THREE.MeshStandardMaterial({ color: 0xfff6d5, emissive: 0xfff2c0, emissiveIntensity: 0 });
-  const matStop = () => new THREE.MeshStandardMaterial({ color: 0x7a0000, emissive: 0xff1a1a, emissiveIntensity: 0.3 });
+  const matPhare = () => new THREE.MeshStandardMaterial({ color: 0xfff6d5, emissive: 0xfff2c0, emissiveIntensity: 0, metalness: 0.3, roughness: 0.1 });
+  const matStop = () => new THREE.MeshStandardMaterial({ color: 0x7a0000, emissive: 0xff1a1a, emissiveIntensity: 0.3, roughness: 0.2 });
+  const piece = (geo, m, x = 0, y = 0, z = 0, ombre = true) => {
+    const o = new THREE.Mesh(geo, m);
+    o.position.set(x, y, z); o.castShadow = ombre; o.receiveShadow = true;
+    g.add(o);
+    return o;
+  };
+  const box = (sx, sy, sz, x, y, z, m, ombre = true) => piece(new THREE.BoxGeometry(sx, sy, sz), m, x, y, z, ombre);
   if (type === "moto") {
-    boite(g, 0.25, 0.35, 1.5, 0, 0.6, 0, carros);
-    boite(g, 0.3, 0.12, 0.7, 0, 0.82, 0.25, noir);   // selle
-    boite(g, 0.6, 0.05, 0.05, 0, 1.05, -0.6, noir);  // guidon
-    phares.push(boite(g, 0.16, 0.12, 0.05, 0, 0.85, -0.78, matPhare()));
-    arriere.push(boite(g, 0.14, 0.08, 0.04, 0, 0.8, 0.78, matStop()));
+    // Moto : cadre, réservoir galbé, selle, fourche, guidon, phare rond, pot d'échappement.
+    piece(new THREE.CapsuleGeometry(0.16, 0.35, 4, 10).rotateX(Math.PI / 2).scale(1, 0.85, 1), carros, 0, 0.92, -0.15);
+    piece(new THREE.CapsuleGeometry(0.13, 0.5, 4, 8).rotateX(Math.PI / 2).scale(1.1, 0.5, 1), noir, 0, 0.95, 0.35);
+    box(0.06, 0.06, 1.1, 0, 0.62, 0.05, noir);
+    for (const s of [-1, 1]) piece(new THREE.CylinderGeometry(0.025, 0.025, 0.75, 6).rotateX(-0.35), chrome, s * 0.08, 0.68, -0.6);
+    piece(new THREE.CylinderGeometry(0.018, 0.018, 0.7, 6).rotateZ(Math.PI / 2), chrome, 0, 1.08, -0.62);
+    piece(new THREE.CylinderGeometry(0.045, 0.06, 0.6, 8).rotateX(Math.PI / 2), chrome, 0.16, 0.42, 0.45);
+    box(0.32, 0.22, 0.5, 0, 0.45, 0.0, mat(0x2b2b2b, { metalness: 0.6, roughness: 0.4 }));   // moteur
+    phares.push(piece(new THREE.CylinderGeometry(0.09, 0.09, 0.08, 14).rotateX(Math.PI / 2), matPhare(), 0, 0.95, -0.82));
+    arriere.push(box(0.14, 0.07, 0.04, 0, 0.92, 0.72, matStop()));
+    box(0.18, 0.1, 0.01, 0, 0.78, 0.78, new THREE.MeshStandardMaterial({ map: plaque(), roughness: 0.5 }), false);
   } else {
-    const bas = H * 0.5;
-    boite(g, W, bas, L, 0, 0.35 + bas / 2, 0, carros);
-    let cabL = L * 0.5, cabZ = 0.15, cabH = H - bas - 0.35;
-    if (["minibus", "bus", "livraison", "ambulance"].includes(type)) { cabL = L * 0.92; cabZ = 0.1; cabH = H - bas - 0.35; }
-    if (type === "camion") { cabL = 2.2; cabZ = -L / 2 + 1.2; }
-    boite(g, W * 0.94, cabH, cabL, 0, 0.35 + bas + cabH / 2, cabZ, carros);
-    boite(g, W * 0.95, cabH * 0.62, cabL * 0.98, 0, 0.35 + bas + cabH * 0.5, cabZ, vitre);
-    boite(g, W * 0.9, cabH * 0.62, 0.06, 0, 0.35 + bas + cabH * 0.5, cabZ - cabL / 2 - 0.01, vitre);
-    if (type === "camion") boite(g, W, H * 0.95, L - 2.6, 0, 0.35 + H * 0.5, 1.1, mat(0xd8d4cc));
+    const S = silhouettes(type, type === "camion" ? L : L, H);
+    piece(profil(S.caisse, W, 0.08), carros);
+    piece(profil(S.vitre, W - 0.06, 0.04), vitre);
+    // Toit (au-dessus du vitrage) et montants de caisse.
+    const [t0, t1, ty] = S.toit;
+    piece(new THREE.BoxGeometry(W - 0.08, 0.07, t1 - t0).translate(0, 0, 0), carros, 0, ty - 0.04, (t0 + t1) / 2);
+    for (const z of S.montants) for (const s of [-1, 1]) box(0.03, ty - 1.0, 0.09, s * (W / 2 - 0.02), (ty + 1.0) / 2 - 0.05, z, type === "bus" ? carros : noir, false);
+    // Pare-chocs, calandre, bas de caisse, passages de roue.
+    for (const z of [-L / 2 - 0.02, L / 2 + 0.02]) box(W * 0.98, 0.18, 0.12, 0, 0.42, z, type === "taxi" || type === "voiture" || type === "police" ? noir : mat(0x2a2a2a), false);
+    box(W * 0.45, 0.16, 0.04, 0, 0.62, -L / 2 - 0.035, noir, false);
+    for (const s of [-1, 1]) box(0.03, 0.08, L * 0.7, s * (W / 2 + 0.005), 0.4, 0, noir, false);
+    // Rétroviseurs.
+    const zr = S.vitre[0][0] + 0.15;
+    for (const s of [-1, 1]) {
+      box(0.04, 0.04, 0.16, s * (W / 2 + 0.06), S.vitre[0][1] + 0.02, zr, noir, false);
+      box(0.06, 0.13, 0.18, s * (W / 2 + 0.14), S.vitre[0][1] + 0.08, zr, carros, false);
+    }
+    // Poignées et lignes de portes.
+    if (type !== "bus") for (const s of [-1, 1]) for (const z of S.montants.slice(0, 2).map((m) => m + 0.1)) {   // (camion : un seul montant)
+      box(0.01, 0.55, 0.012, s * (W / 2 + 0.002), 0.68, z - 0.05, noir, false);
+      box(0.025, 0.03, 0.12, s * (W / 2 + 0.01), 0.86, z + 0.25, chrome, false);
+    }
+    // Phares, feux arrière, clignotants, plaques.
+    for (const s of [-1, 1]) {
+      phares.push(box(0.36, 0.13, 0.05, s * (W / 2 - 0.3), type === "bus" ? 0.75 : 0.7, -L / 2 - 0.035, matPhare(), false));
+      arriere.push(box(0.28, 0.16, 0.05, s * (W / 2 - 0.25), type === "bus" ? 0.95 : 0.82, L / 2 + 0.035, matStop(), false));
+      box(0.1, 0.06, 0.05, s * (W / 2 - 0.08), 0.58, -L / 2 - 0.035, mat(0xffa000, { emissive: 0x552200 }), false);
+    }
+    const mPlaque = new THREE.MeshStandardMaterial({ map: plaque(), roughness: 0.45 });
+    for (const z of [-L / 2 - 0.09, L / 2 + 0.09]) {
+      const p = piece(new THREE.PlaneGeometry(0.52, 0.12), mPlaque, 0, 0.5, z, false);
+      if (z < 0) p.rotation.y = Math.PI;
+    }
+    // Spécificités kinoises et de service.
+    if (type === "camion") {
+      box(W, H * 0.92, L - 2.6, 0, 0.45 + H * 0.46, 1.1, mat(0xd8d4cc, { roughness: 0.6 }));
+      box(W * 0.9, 0.25, L - 2.4, 0, 0.55, 1.0, noir, false);
+    }
     if (type === "minibus") {
-      boite(g, W + 0.02, 0.3, L + 0.02, 0, 0.55, 0, mat(0x1d4f9e));             // bande bleue
-      boite(g, 0.05, cabH + bas * 0.6, 1.0, W / 2 + 0.01, 1.2, -0.3, noir);      // porte coulissante ouverte
+      box(W + 0.02, 0.22, L * 0.98, 0, 0.62, 0, mat(0x1d4f9e), false);                    // bande bleue
+      box(0.05, 1.5, 0.95, W / 2 + 0.03, 1.15, -0.35, noir, false);                       // porte coulissante ouverte
+      box(W * 0.8, 0.12, 1.4, 0, H + 0.08, 0.8, noir, false);                             // galerie de toit
     }
-    if (type === "taxi") boite(g, W * 0.95, 0.06, cabL * 0.95, 0, 0.35 + H - 0.32, cabZ, mat(0x1d4f9e));
-    if (type === "bus") boite(g, W + 0.02, 0.45, L + 0.02, 0, 0.75, 0, mat(0x1565c0));
+    if (type === "taxi") {
+      box(W + 0.01, 0.1, L * 0.96, 0, 0.75, 0, mat(0x1d4f9e), false);
+      const enseigne = new THREE.MeshStandardMaterial({ color: 0xffe9a0, emissive: 0x332200, roughness: 0.4 });
+      box(0.55, 0.14, 0.22, 0, H + 0.06, (t0 + t1) / 2, enseigne, false);
+    }
+    if (type === "bus") {
+      box(W + 0.02, 0.4, L * 0.98, 0, 0.85, 0, mat(0x1565c0), false);
+      box(W * 0.85, 0.25, 0.04, 0, H - 0.4, -L / 2 - 0.02, mat(0x111111, { emissive: 0xff8800, emissiveIntensity: 0.4 }), false);  // girouette
+    }
     if (type === "ambulance") {
-      boite(g, W + 0.02, 0.28, L + 0.02, 0, 1.15, 0, mat(0xd32f2f));
-      boite(g, 0.6, 0.5, 0.05, W / 2 + 0.01, 1.7, 0.6, mat(0xd32f2f));      // croix (simplifiée)
+      box(W + 0.02, 0.25, L * 0.98, 0, 1.0, 0, mat(0xd32f2f), false);
+      for (const s of [-1, 1]) { box(0.02, 0.5, 0.15, s * (W / 2 + 0.02), 1.65, 0.6, mat(0xd32f2f), false); box(0.02, 0.15, 0.5, s * (W / 2 + 0.02), 1.65, 0.6, mat(0xd32f2f), false); }
     }
-    if (type === "police") boite(g, W + 0.02, 0.18, L * 0.7, 0, 0.9, 0, mat(0xf2f2f2));
-    if (type === "livraison") boite(g, 0.05, 1.0, 2.0, W / 2 + 0.01, 1.4, 0.8, mat(0xd84315));
+    if (type === "police") for (const s of [-1, 1]) box(0.015, 0.18, L * 0.55, s * (W / 2 + 0.005), 0.8, 0.1, mat(0xf2f2f2), false);
+    if (type === "livraison") for (const s of [-1, 1]) box(0.02, 0.8, 2.2, s * (W / 2 + 0.01), 1.5, 0.9, mat(0xd84315), false);
     if (type === "ambulance" || type === "police") {
       for (const [sx, c] of [[-0.3, 0x1e5bff], [0.3, 0xff2a2a]]) {
-        const m = new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0 });
+        const m = new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0, roughness: 0.2 });
         gyro.push(m);
-        boite(g, 0.45, 0.14, 0.25, sx, 0.35 + H + 0.07, cabZ, m);
+        box(0.45, 0.13, 0.25, sx, ty + 0.06, (t0 + t1) / 2 - 0.3, m, false);
       }
     }
-    for (const s of [-1, 1]) {
-      phares.push(boite(g, 0.32, 0.16, 0.05, s * (W / 2 - 0.3), 0.35 + bas * 0.7, -L / 2 - 0.01, matPhare()));
-      arriere.push(boite(g, 0.3, 0.14, 0.05, s * (W / 2 - 0.3), 0.35 + bas * 0.7, L / 2 + 0.01, matStop()));
-    }
   }
-  // Roues (animées).
+  // Roues : pneu arrondi (tore + bande de roulement), jante à 5 rayons, enjoliveur.
   const roues = [];
-  const geoRoue = new THREE.CylinderGeometry(t.r, t.r, type === "moto" ? 0.12 : 0.24, 14);
-  geoRoue.rotateZ(Math.PI / 2);
-  const jante = mat(0x9aa0a6, { metalness: 0.8 });
+  const R = t.r, lgP = type === "moto" ? 0.11 : 0.22;
+  const { pneu, jante: geoJante } = geometriesRoue(R, lgP);
+  const jante = mat(0xa7acb2, { metalness: 0.85, roughness: 0.25 });
   for (const p of positionsRoues(type)) {
     const pivot = new THREE.Group();
-    pivot.position.set(p.x, t.r, p.z);
-    const r = new THREE.Mesh(geoRoue, noir);
+    pivot.position.set(p.x, R, p.z);
+    const r = new THREE.Mesh(pneu, noir);
     r.castShadow = true;
-    const j = new THREE.Mesh(new THREE.CylinderGeometry(t.r * 0.55, t.r * 0.55, 0.26, 8).rotateZ(Math.PI / 2), jante);
-    r.add(j);
+    r.add(new THREE.Mesh(geoJante, jante));
     pivot.add(r);
-    if (type === "moto" && p.x !== 0) pivot.visible = false;
+    // Moto : 4 points d'appui physiques, mais 2 roues affichées (avant et arrière, dans l'axe).
+    if (type === "moto") {
+      if (p.av && p.x < 0) pivot.position.x = 0;
+      else if (p.x !== 0) pivot.visible = false;
+    }
     g.add(pivot);
     roues.push({ pivot, roue: r });
   }
+  fusionnerParMateriau(g, new Set([...phares, ...arriere]), gyro);
   g.userData = { type, roues, phares, arriere, gyro };
   return g;
+}
+
+const ROUES = new Map();
+/** Roue (géométries partagées) : pneu avec flancs arrondis ; jante à 5 rayons. */
+function geometriesRoue(R, lgP) {
+  const k = R + "_" + lgP;
+  if (ROUES.has(k)) return ROUES.get(k);
+  const ni = (g) => (g.index ? g.toNonIndexed() : g);
+  const pneu = mergeGeometries([ni(new THREE.CylinderGeometry(R, R, lgP, 20).rotateZ(Math.PI / 2)),
+    ...[-1, 1].map((s) => ni(new THREE.TorusGeometry(R - 0.05, 0.05, 6, 20).rotateY(Math.PI / 2).translate((s * lgP) / 2, 0, 0)))], false);
+  const jante = mergeGeometries([ni(new THREE.CylinderGeometry(R * 0.6, R * 0.6, lgP + 0.02, 14).rotateZ(Math.PI / 2)),
+    ...[0, 1, 2, 3, 4].map((i) => ni(new THREE.BoxGeometry(lgP + 0.04, R * 0.08, R * 1.05).rotateX((i / 5) * Math.PI)))], false);
+  const r = { pneu, jante };
+  ROUES.set(k, r);
+  return r;
+}
+
+/** Regroupe les pièces fixes de même matériau en un seul maillage (beaucoup moins d'appels de dessin). */
+function fusionnerParMateriau(g, garder, gyro) {
+  const groupes = new Map();
+  for (const o of [...g.children]) {
+    if (!o.isMesh || garder.has(o) || gyro.includes(o.material)) continue;
+    o.updateMatrix();
+    const geo = (o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()).applyMatrix4(o.matrix);
+    for (const k of Object.keys(geo.attributes)) if (!["position", "normal", "uv"].includes(k)) geo.deleteAttribute(k);
+    if (!geo.attributes.uv) geo.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array(geo.attributes.position.count * 2), 2));
+    if (!groupes.has(o.material)) groupes.set(o.material, { geos: [], ombre: false });
+    const e = groupes.get(o.material);
+    e.geos.push(geo); e.ombre ||= o.castShadow;
+    g.remove(o);
+  }
+  for (const [m, e] of groupes) {
+    const fus = mergeGeometries(e.geos, false);
+    if (!fus) continue;
+    const mesh = new THREE.Mesh(fus, m);
+    mesh.castShadow = e.ombre; mesh.receiveShadow = true;
+    g.add(mesh);
+  }
 }
 
 /** Positions des roues (repère du véhicule, avant vers -Z). Moto : 4 rayons rapprochés, 2 roues visibles. */

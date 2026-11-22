@@ -123,7 +123,8 @@ def main(zid, lat0, lon0, hx, hz, dem_path, out, monuments=None):
     # sens unique : accès interdit « en arrière » pour tous les usagers (Overture access_restrictions).
     routes = q(f"""SELECT ST_AsWKB(geometry), class, names.primary,
                    COALESCE(len(list_filter(access_restrictions, lambda x: x.access_type = 'denied'
-                        AND x."when".heading = 'backward' AND x."when".mode IS NULL)) > 0, false)
+                        AND x."when".heading = 'backward' AND x."when".mode IS NULL)) > 0, false),
+                   road_surface[1].value
                    FROM read_parquet('{R}/theme=transportation/type=segment/*', hive_partitioning=1)
                    WHERE {BB} AND subtype='road'""")
     lieux = q(f"""SELECT ST_AsWKB(geometry), names.primary, basic_category, confidence FROM read_parquet('{R}/theme=places/type=place/*', hive_partitioning=1)
@@ -261,7 +262,9 @@ def main(zid, lat0, lon0, hx, hz, dem_path, out, monuments=None):
              "residential": 5.5, "living_street": 4.5, "service": 3.8, "track": 3.5, "path": 1.8,
              "footway": 2.0, "pedestrian": 4, "steps": 2.0, "cycleway": 2.0}
     reseau = []
-    for g, cls, name, sens_unique in routes:
+    surfaces = {}
+    for g, cls, name, sens_unique, surface in routes:
+        surfaces[surface] = surfaces.get(surface, 0) + 1
         line = to_local(wkb.loads(bytes(g)), P)
         if line.is_empty:
             continue
@@ -302,6 +305,8 @@ def main(zid, lat0, lon0, hx, hz, dem_path, out, monuments=None):
                         item = {"p": flat, "k": cls, "w": WIDTH.get(cls, 4)}
                         if name:
                             item["n"] = name
+                        if surface:   # revêtement cartographié (paved, unpaved, dirt, gravel…)
+                            item["s"] = surface
                         chunks[(i, j)]["r"].append(item)
 
     # --- Lieux ---
@@ -386,7 +391,7 @@ def main(zid, lat0, lon0, hx, hz, dem_path, out, monuments=None):
         "relief": {"pas": STEP, "n": nx, "nx": nx, "nz": nz, "base_m": round(base, 1)},
         "monuments": {**sortie_monuments, **({"hopital_principal": {"p": principal[1]["p"], "h": principal[1]["h"]}} if principal else {})},
         "tuiles": liste,
-        "stats": {**stats, "arbres_reels": reels, "arbres_estimes": estimes, "routes": len(reseau), "lieux": len(lieux)},
+        "stats": {**stats, "revetements": {str(k): v for k, v in surfaces.items()}, "arbres_reels": reels, "arbres_estimes": estimes, "routes": len(reseau), "lieux": len(lieux)},
         "attribution": "© contributeurs OpenStreetMap (ODbL) · © Overture Maps Foundation · Google Open Buildings (CC BY 4.0) "
                        "· ESA WorldCover · Copernicus DEM GLO-30",
     }

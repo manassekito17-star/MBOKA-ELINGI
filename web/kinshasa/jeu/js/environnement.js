@@ -32,6 +32,14 @@ export class Environnement {
     scene.add(this.ambiance);
     scene.fog = new THREE.Fog(0xd9d2c4, 200, 1400);
     this.renderer = renderer;
+    this.qualite = qualite;
+    // Reflets : carte d'environnement calculée à partir du ciel (vitres, tôle, eau, carrosseries).
+    this.pmrem = new THREE.PMREMGenerator(renderer);
+    this.sceneCiel = new THREE.Scene();
+    this.cielReflets = new Sky();
+    this.cielReflets.scale.setScalar(1000);
+    this.sceneCiel.add(this.cielReflets);
+    this.prochainReflet = 0;
     this._nuages();
     this._pluie();
     this.lumieresRue = [];
@@ -101,16 +109,31 @@ export class Environnement {
     this.soleil.target.position.copy(centre);
     this.soleil.intensity = 3.2 * jour * (1 - couvert * 0.7);
     this.soleil.color.setHSL(0.09, 0.6, 0.55 + 0.4 * THREE.MathUtils.smoothstep(d.y, 0, 0.4));
-    this.ambiance.intensity = 0.12 + 0.75 * jour;
+    // Avec la carte d'environnement (lumière du ciel), l'éclairage d'ambiance simple est réduit.
+    this.ambiance.intensity = (0.12 + 0.75 * jour) * (this.scene.environment ? 0.3 : 1);
     this.ambiance.color.setHSL(0.6, 0.4, 0.45 + 0.4 * jour);
     const brume = new THREE.Color().setHSL(0.09, 0.2 * jour, 0.05 + 0.75 * jour * (1 - couvert * 0.3));
     this.scene.fog.color.copy(brume);
     this.scene.fog.near = 120 - couvert * 90;
     this.scene.fog.far = 1400 - couvert * 1000;
-    this.renderer.toneMappingExposure = 0.45 + 0.55 * jour * (1 - 0.4 * couvert);
+    this.renderer.toneMappingExposure = (0.45 + 0.5 * jour * (1 - 0.4 * couvert)) * (this.scene.environment ? 0.85 : 1);
     this.matNuages.opacity = 0.25 + couvert * 0.6;
     this.matNuages.color.setScalar(0.25 + 0.75 * jour - couvert * 0.25);
     this.nuages.position.x = centre.x; this.nuages.position.z = centre.z;
+    // Mise à jour des reflets du ciel (toutes les ~10 min de jeu ; une seule fois en qualité basse).
+    this.prochainReflet -= dt;
+    // (aussi dès que la lumière change nettement : lever, coucher du soleil, saut d'heure)
+    if (this.prochainReflet <= 0 || Math.abs(jour - (this.jourReflet ?? -1)) > 0.08 || Math.abs(couvert - (this.couvertReflet ?? -1)) > 0.15) {
+      this.prochainReflet = this.qualite === "basse" ? 120 : 10;
+      this.jourReflet = jour; this.couvertReflet = couvert;
+      const r = this.cielReflets.material.uniforms;
+      for (const k of ["turbidity", "rayleigh", "mieCoefficient", "mieDirectionalG"]) r[k].value = u[k].value;
+      r.sunPosition.value.copy(d);
+      const ancien = this.scene.environment;
+      this.scene.environment = this.pmrem.fromScene(this.sceneCiel, 0, 1, 2000).texture;
+      this.scene.environmentIntensity = 0.15 + 0.5 * jour;
+      if (ancien) ancien.dispose();
+    }
     this.matNuages.map.offset.x += dt * 0.002;
     // Pluie autour de la caméra.
     this.gouttes.visible = this.pluie01 > 0.05;
