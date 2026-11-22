@@ -1,6 +1,6 @@
 # MBOKA ELENGI
 
-> **Nouveau : Kinshasa 3D (version web).** Une carte 3D de **toute l'agglomération** (1,38 million de bâtiments réels, relief, satellite, recherche) et un **mode jeu** jouable à pied et en véhicule dans deux zones : **Limete** et la **Gombe** (avec circulation, bus et moto-taxis simulés). Détails, sources, niveaux de confiance et plan : [docs/JUMEAU_NUMERIQUE.md](docs/JUMEAU_NUMERIQUE.md). Lancement : `python tools/jumeau/serveur_local.py`, puis ouvrir http://localhost:8080/
+> **Nouveau : Kinshasa 3D (version web).** Une carte 3D de **toute l'agglomération** (1,38 million de bâtiments réels, relief, satellite, recherche) et un **mode jeu** jouable à pied et en véhicule dans trois zones : **Limete**, la **Gombe** et **Lingwala / Kasa-Vubu** (Stade des Martyrs, Palais du Peuple, Hôpital du Cinquantenaire) (avec circulation, bus et moto-taxis simulés). Détails, sources, niveaux de confiance et plan : [docs/JUMEAU_NUMERIQUE.md](docs/JUMEAU_NUMERIQUE.md). Lancement : `python tools/jumeau/serveur_local.py`, puis ouvrir http://localhost:8080/
 
 *« Le beau pays » en lingala.* Jeu de simulation de vie en monde ouvert, à **Kinshasa**.
 

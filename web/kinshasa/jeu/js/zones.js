@@ -26,6 +26,19 @@ export const ZONES = {
         type: "minibus", depart: "Est", terminus: "Ouest", nbBus: 3 },
     ],
   },
+  centre: {
+    nom: "Lingwala / Kasa-Vubu — Stade des Martyrs",
+    court: "Lingwala et Kasa-Vubu",
+    description: "2,8 × 4,6 km : Stade des Martyrs, Palais du Peuple, Hôpital du Cinquantenaire, boulevard Triomphal",
+    depart: { x: 380, z: -180 },          // boulevard Triomphal, entre le Palais du Peuple et le stade
+    monument: "centre",
+    lignesSimulees: [
+      { axe: "Boulevard Triomphal", id: "sim_c1", ref: "C1", nom: "Minibus Boulevard Triomphal (ligne simulée)",
+        type: "minibus", depart: "Palais du Peuple", terminus: "Stade des Martyrs", nbBus: 3 },
+      { axe: "Avenue Kasa-Vubu", id: "sim_c2", ref: "C2", nom: "Minibus Avenue Kasa-Vubu (ligne simulée)",
+        type: "minibus", depart: "Nord", terminus: "Sud", nbBus: 4 },
+    ],
+  },
 };
 
 export const ZONE_DEFAUT = "limete";

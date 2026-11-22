@@ -1,0 +1,15 @@
+{
+  "note": "Monuments de la zone Lingwala / Kasa-Vubu. Contours RÉELS (OpenStreetMap) ; formes et hauteurs d'après photos (estimées). Mêmes sources que la version Godot (tools/osm/zones/centre.json).",
+  "stade": { "osm": "way:4402561", "degagement": 45 },
+  "palais": { "osm": "relation:7335461", "degagement": 30 },
+  "hopital_site": {
+    "osm": "way:102422512",
+    "note": "Hôpital du Cinquantenaire : blocs blancs (hublots) et ailes basses en brique rouge, d'après photos. Hauteurs estimées.",
+    "regles": [
+      { "aire_min": 2500, "h": 21.2, "fc": "f2f2f0", "tc": "d9d9d6", "principal": true },
+      { "aire_min": 1000, "h": 17.8, "fc": "f2f2f0", "tc": "d9d9d6" },
+      { "aire_min": 300, "h": 7.2, "fc": "bf6a4f", "tc": "8c8c88" },
+      { "aire_min": 0, "h": 4.0, "fc": "bf6a4f", "tc": "8c8c88" }
+    ]
+  }
+}

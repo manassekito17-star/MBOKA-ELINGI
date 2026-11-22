@@ -149,7 +149,8 @@ export class Monde {
       const y0 = b.y - 1.5;                 // fondation enterrée (pas de vide sous les murs)
       const y1 = b.y + b.h;
       const haut = b.h >= 15;
-      c.setHex(haut ? 0xc9c4ba : FACADES[b.v % 8]);
+      // fc / tc : couleurs imposées d'après photos (ex. Hôpital du Cinquantenaire).
+      c.setHex(b.fc ? parseInt(b.fc, 16) : haut ? 0xc9c4ba : FACADES[b.v % 8]);
       const cr = c.r, cg = c.g, cb = c.b;
       let perim = 0;
       for (let i = 0; i < pts.length; i++) {
@@ -168,7 +169,7 @@ export class Monde {
       }
       // Toit.
       const idx = THREE.ShapeUtils.triangulateShape(pts, []);
-      c.setHex(haut ? 0x9c9890 : TOITS[(b.v * 3) % TOITS.length]);
+      c.setHex(b.tc ? parseInt(b.tc, 16) : haut ? 0x9c9890 : TOITS[(b.v * 3) % TOITS.length]);
       for (const [i0, i1, i2] of idx) {
         const t = orienter([i0, i1, i2].map((i) => [pts[i].x, y1, pts[i].y]), [0, 1, 0]);
         for (const [x, y, z] of t) {

@@ -3,6 +3,7 @@
 // C : carrefour à feux, 30 véhicules     D : bouchon derrière un bus arrêté
 // F : piétons sur un passage piéton      G : heures de pointe / heures creuses
 // H : accident simulé (voie bloquée)     I : zone de la Gombe (réseau réel, lignes, feux)
+// J : zone Lingwala / Kasa-Vubu (ligne réelle 11, feux réels)
 // (Le scénario E — joueur qui marche, court, conduit — est testé dans le navigateur :
 //  tests/e2e_navigateur.cjs.)
 import { test } from "node:test";
@@ -243,4 +244,23 @@ test("Scénario I : la Gombe — lignes réelles, feux réels, circulation fluid
   const st = sim.statistiques();
   assert.ok(st.vehicules > 250, `véhicules : ${st.vehicules}`);
   assert.ok(st.vitesseAxes > 3, `vitesse sur les axes : ${(st.vitesseAxes * 3.6).toFixed(0)} km/h`);
+});
+
+// J : zone Lingwala / Kasa-Vubu (Stade des Martyrs, Palais du Peuple, Hôpital du Cinquantenaire).
+test("Scénario J : Lingwala / Kasa-Vubu — ligne réelle, feux réels, circulation sans blocage", () => {
+  const C = new URL("../zones/centre/", import.meta.url);
+  const lireC = (f) => JSON.parse(fs.readFileSync(new URL(f, C)));
+  const reseau = lireC("reseau.json"), transports = lireC("transports.json"), manifest = lireC("manifest.json");
+  // Les contours réels des trois monuments sont dans la zone.
+  for (const k of ["stade", "palais", "hopital_site", "hopital_principal"]) assert.ok(manifest.monuments[k]?.p.length >= 6, k);
+  const sim = new Circulation(reseau, transports, { heure: 17, niveau: 1, graine: 9 });
+  assert.deepEqual(sim.lignes.map((l) => l.ref).sort(), transports.lignes.map((l) => l.ref).sort());
+  assert.ok(sim.statistiques().feuxReels >= 1);
+  sim.definirJoueur(380, -180, false);
+  for (let m = 1; m <= 10; m++) {
+    for (let i = 0; i < 60; i++) sim.pas(1);
+    assert.equal(sansCollision(sim), null);
+  }
+  const st = sim.statistiques();
+  assert.ok(st.vehicules > 250 && st.vitesseAxes > 3, JSON.stringify(st));
 });

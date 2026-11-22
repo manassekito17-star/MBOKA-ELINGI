@@ -1,9 +1,9 @@
-# Simulation de la vie urbaine — Limete et Gombe (Kinshasa)
+# Simulation de la vie urbaine — Limete, Gombe, Lingwala / Kasa-Vubu (Kinshasa)
 
 Module « vie urbaine » du mode jeu web (`web/kinshasa/jeu/`).
 Ce document dit **ce qui est réel, ce qui est simulé, ce qui est testé, et ce qui manque**.
 
-> **Zones couvertes : Limete — Tour de l'Échangeur (3,2 × 3,2 km) et la Gombe (9,2 × 4 km).**
+> **Zones couvertes : Limete — Tour de l'Échangeur (3,2 × 3,2 km), la Gombe (9,2 × 4 km) et Lingwala / Kasa-Vubu (2,8 × 4,6 km, `jeu/?zone=centre`).**
 > Le reste de Kinshasa n'est pas encore jouable en mode GTA.
 >
 > La zone « Gombe » est un rectangle qui couvre toute la commune de la Gombe (12,3 km²), une partie du fleuve Congo
@@ -44,7 +44,8 @@ Données cartographiques :
 | Arrêts nommés | **Réel** | Limete : 7 arrêts OSM (un seul, « 14ème Rue », sur la ligne 02). Gombe : 31 points d'arrêt OSM. Les points de même nom à moins de 80 m (quai, poteau, chaque côté) comptent pour un seul arrêt. |
 | Passages piétons | **Réel** + simulés | Limete : 6 réels. Gombe : 40 réels. Des passages simulés sont ajoutés aux carrefours à feux. |
 | Feux tricolores | **Réel** à la Gombe, sinon **simulé** | Limete : OSM n'en contient **aucun**. Gombe : 7 feux OSM, regroupés en **4 carrefours à feux réels**. Les autres feux (81 à la Gombe) sont placés par le jeu aux croisements de grands axes. |
-| Lignes de minibus **M1** (boulevard Lumumba), **G1** (boulevard du 30 Juin), **G2** (avenue des Huileries) | **Simulé** | Lignes inventées, signalées comme telles dans le jeu |
+| **Lingwala / Kasa-Vubu** : ligne **11** | **Réel** (tracé) | 4442 m dans la zone ; 7 arrêts, 27 passages piétons et 9 feux OSM (5 carrefours à feux réels) |
+| Lignes de minibus **M1** (boulevard Lumumba), **G1** (boulevard du 30 Juin), **G2** (avenue des Huileries), **C1** (boulevard Triomphal), **C2** (avenue Kasa-Vubu) | **Simulé** | Lignes inventées, signalées comme telles dans le jeu |
 | Arrêts « Arrêt N (simulé) » | **Simulé** | Un arrêt tous les 400 m environ là où OSM n'en a pas |
 | Horaires, prix (500 / 1000 / 1500 FC) | **Simulé** | Estimés en direct à partir des véhicules. Ce ne sont pas des horaires officiels. |
 | Nombre de véhicules, mélange, embouteillages | **Simulé** | Calé sur les sources ci-dessus. Aucun comptage réel. |
@@ -154,7 +155,7 @@ La caméra ne traverse pas les murs : un rayon détecte le mur et rapproche la c
 ## 4. Scénarios de test (exécutés)
 
 Commande : `cd web/kinshasa/jeu && npm test`.
-Résultat au 21/11/2026 : **21 tests sur 21 réussis**. Il y a 13 tests de physique et de géographie (dont le relief des zones rectangulaires), et 8 scénarios de simulation.
+Résultat au 22/11/2026 : **22 tests sur 22 réussis**. Il y a 13 tests de physique et de géographie (dont le relief des zones rectangulaires), et 9 scénarios de simulation.
 
 Les scénarios sont dans `tests/simulation.test.js`. Chacun vérifie aussi qu'**aucun véhicule n'en chevauche un autre**.
 
@@ -168,9 +169,10 @@ Les scénarios sont dans `tests/simulation.test.js`. Chacun vérifie aussi qu'**
 | **F** — Piétons qui traversent | 16 piétons différents traversent. Aucun véhicule sur le passage pendant qu'il est occupé. | ✅ |
 | **G** — Heures de pointe | Il y a plus de véhicules à 8 h qu'à 13 h, et plus à 13 h qu'à 3 h. La vitesse est plus élevée la nuit qu'en pointe. | ✅ |
 | **H** — Accident | Le véhicule accidenté est immobile en 5 s, l'accident est ensuite dégagé, sans chevauchement | ✅ |
+| **J** — Zone Lingwala / Kasa-Vubu | Contours réels des 3 monuments présents, ligne réelle 11, carrefours à feux réels, 10 min à 17 h sans chevauchement ni blocage | ✅ |
 | **I** — Zone de la Gombe | Les 3 lignes réelles sont créées (dont la 06B en boucle), au moins un carrefour à feux réel, 12 min à 8 h sans chevauchement, chaque bus a avancé pendant les 5 dernières minutes, plus de 250 véhicules et vitesse sur les axes supérieure à 11 km/h | ✅ |
 
-**Scénario E (navigateur).** Test `tests/e2e_navigateur.cjs`, avec Chromium et Playwright (rendu logiciel). **22 vérifications sur 22 réussies.**
+**Scénario E (navigateur).** Test `tests/e2e_navigateur.cjs`, avec Chromium et Playwright (rendu logiciel). **25 vérifications sur 25 réussies.**
 - Carte sans erreur, tuiles chargées, circulation et piétons affichés autour du joueur.
 - Marche et accroupi.
 - Conduite : monter, avancer, freiner, descendre.
@@ -179,6 +181,7 @@ Les scénarios sont dans `tests/simulation.test.js`. Chacun vérifie aussi qu'**
 - Moto-taxi prise par le joueur : montée comme passager, puis descente.
 - Sauvegarde, et aucune erreur JavaScript.
 - Gombe : zone chargée, lignes réelles 02, 06B et 11, circulation affichée, le joueur marche, sauvegarde séparée de celle de Limete.
+- Lingwala / Kasa-Vubu : stade, palais et hôpital construits ; circulation affichée ; le mur du stade arrête le joueur.
 - Changement de zone depuis le jeu (retour à Limete).
 
 ### Performances mesurées (machine de test, simulation seule)
@@ -202,7 +205,8 @@ Chargement de la Gombe dans le navigateur de test : environ 7 s. Rendu : environ
 - **Pas d'intérieurs de bâtiments ni de portes ouvrables.** La caméra « intérieure » n'existe que dans les véhicules.
 - L'inclinaison des motos est **visuelle**. Leur physique simulée reste celle de la trajectoire.
 - Les feux non cartographiés et les lignes M1, G1 et G2 sont **simulés** (voir la section 2).
-- **Deux zones** sont jouables : Limete et la Gombe. Elles sont séparées : on passe de l'une à l'autre par le menu, pas en roulant.
+- **Trois zones** sont jouables : Limete, la Gombe et Lingwala / Kasa-Vubu. Elles sont séparées : on passe de l'une à l'autre par le menu, pas en roulant.
+- Lingwala / Kasa-Vubu : les trois monuments sont des modèles simplifiés d'après photos, posés sur leurs contours réels OSM. Leurs hauteurs sont estimées (stade ~30 m, palais ~20 m, bâtiments de l'hôpital 4 à 21 m). Les hublots cerclés de rouge de l'hôpital (présents dans la version Godot) ne sont pas encore reproduits sur le web, et il n'y a pas d'intérieurs.
 - Gombe :
   - les monuments (Tour Sozacom, gare centrale, Palais de la Nation, Hôtel Fleuve Congo…) ne sont **pas modélisés à part** : ce sont les volumes génériques des données ;
   - seuls 609 bâtiments sur 42 933 ont une hauteur documentée. Les autres ont une hauteur **estimée** d'après leur surface, si bien que le centre-ville paraît plus bas qu'en réalité. J'ai essayé d'estimer les hauteurs avec le relief satellite Copernicus, mais il sous-estime fortement les tours connues (42 m au lieu de 90 m pour l'Hôtel Fleuve Congo), donc cette piste n'a pas été retenue ;

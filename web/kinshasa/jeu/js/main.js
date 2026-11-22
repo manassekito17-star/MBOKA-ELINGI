@@ -11,7 +11,7 @@ import { Environnement, METEOS } from "./environnement.js";
 import { Audio } from "./audio.js";
 import { Controles } from "./controles.js";
 import { chargerPersonnages } from "./personnages.js";
-import { tourEchangeur } from "./monuments.js";
+import { tourEchangeur, monumentsCentre } from "./monuments.js";
 import { Projection, Trajet } from "./geo.js";
 import { Circulation, NIVEAUX, profilHoraire } from "./simulation/circulation.js";
 import { RenduCirculation } from "./simulation/rendu.js";
@@ -93,6 +93,7 @@ async function demarrer() {
   const audio = new Audio();
   const ctl = new Controles(renderer.domElement);
   if (CONFIG.monument === "echangeur") tourEchangeur(scene, physique, monde.hauteur(0, 0));
+  const monuments = CONFIG.monument === "centre" ? monumentsCentre(scene, physique, monde, manifest.monuments) : {};
 
   // --- Sauvegarde et point de départ.
   const sauv = params.has("nouveau") ? null : Sauvegarde.charger(ZONE);
@@ -406,7 +407,7 @@ async function demarrer() {
   addEventListener("pointerdown", unGeste);
   addEventListener("keydown", unGeste);
 
-  window.__jeu = { etat, joueur, flotte, env, monde, camera, sim, rendu, entrerSortir, sauvegarder, prendreTransport, interagir };
+  window.__jeu = { etat, joueur, flotte, env, monde, camera, sim, rendu, entrerSortir, sauvegarder, prendreTransport, interagir, monuments, ctl };
 
   function boucle() {
     requestAnimationFrame(boucle);

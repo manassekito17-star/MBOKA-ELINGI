@@ -24,6 +24,9 @@ Exemples :
       data/kinshasa/relief_copernicus_glo30.tif web/kinshasa/jeu/zones/limete
   python3 tools/jumeau/decouper_zone.py gombe -4.3120 15.30485 4600x2000 \
       data/kinshasa/relief_copernicus_glo30.tif web/kinshasa/jeu/zones/gombe
+  python3 tools/jumeau/decouper_zone.py centre -4.3328 15.3034 1400x2300 \
+      data/kinshasa/relief_copernicus_glo30.tif web/kinshasa/jeu/zones/centre tools/jumeau/monuments/centre.json
+  (7e argument facultatif : monuments modélisés à part — contours OSM, bâtiments retirés ou restylés)
 """
 import json
 import math
@@ -62,11 +65,41 @@ def to_local(geom, P):
     return transform(lambda lon, lat, *_: P.xz(lon, lat), geom)
 
 
+def contour_osm(ref):
+    """Contour extérieur (lon, lat) d'un chemin ou d'une relation OpenStreetMap, via l'API officielle."""
+    import time
+    import urllib.request
+    import xml.etree.ElementTree as ET
+    from shapely.ops import linemerge, polygonize
+    genre, ident = ref.split(":")
+    req = urllib.request.Request(f"https://api.openstreetmap.org/api/0.6/{genre}/{ident}/full",
+                                 headers={"User-Agent": "MbokaElengi-map-tool/0.3"})
+    for essai in range(6):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                root = ET.fromstring(r.read())
+            break
+        except Exception as e:  # limite de débit de l'API : on attend puis on réessaie
+            if essai == 5:
+                raise
+            print(f"  API OSM ({ref}) : {e}, nouvel essai")
+            time.sleep(20 * (essai + 1))
+    nd = {n.get("id"): (float(n.get("lon")), float(n.get("lat"))) for n in root.iter("node")}
+    ways = {w.get("id"): [nd[x.get("ref")] for x in w.iter("nd")] for w in root.iter("way")}
+    if genre == "way":
+        return Polygon(ways[ident])
+    rel = next(r for r in root.iter("relation") if r.get("id") == ident)
+    lignes = [LineString(ways[m.get("ref")]) for m in rel.iter("member")
+              if m.get("type") == "way" and m.get("role") in ("outer", "") and m.get("ref") in ways]
+    polys = list(polygonize(linemerge(lignes)))
+    return max(polys, key=lambda p: p.area)
+
+
 def r1(v):
     return round(float(v), 1)
 
 
-def main(zid, lat0, lon0, hx, hz, dem_path, out):
+def main(zid, lat0, lon0, hx, hz, dem_path, out, monuments=None):
     P = Projection(lat0, lon0)
     os.makedirs(out, exist_ok=True)
     lon_a, lat_a = P.lonlat(-hx, hz)
@@ -157,8 +190,23 @@ def main(zid, lat0, lon0, hx, hz, dem_path, out):
 
     zone_box = box(-hx, -hz, hx, hz)
 
+    # --- Monuments modélisés à part : contours OSM réels (repère local) ---
+    monuments = monuments or {}
+    contours, sortie_monuments = {}, {}
+    for cle, m in monuments.items():
+        if not isinstance(m, dict) or "osm" not in m:
+            continue
+        pg = to_local(contour_osm(m["osm"]), P)
+        contours[cle] = pg
+        ring = list(pg.exterior.coords)[:-1]
+        sortie_monuments[cle] = {"p": [r1(v) for xy in ring for v in xy], "osm": m["osm"]}
+        print(f"  monument {cle} ({m['osm']}) : {pg.area:.0f} m²")
+    retires = [contours[k].buffer(monuments[k]["degagement"]) for k in contours if monuments[k].get("degagement")]
+    restyles = [(contours[k], monuments[k]["regles"]) for k in contours if monuments[k].get("regles")]
+
     # --- Bâtiments ---
     stats = {"confirmee": 0, "satellite": 0, "hauteur_documentee": 0, "ignores": 0}
+    principal = None
     for g, src_name, height, floors, name, cat in bats:
         geom = to_local(wkb.loads(bytes(g)), P)
         polys = list(geom.geoms) if isinstance(geom, MultiPolygon) else [geom]
@@ -172,8 +220,18 @@ def main(zid, lat0, lon0, hx, hz, dem_path, out):
             if zid == "limete" and math.hypot(c.x, c.y) < 60 and pg.area > 2000:
                 stats["ignores"] += 1
                 continue
+            # Emprise d'un monument modélisé par le jeu (stade, palais…) : bâtiment générique retiré.
+            if any(r.contains(c) for r in retires):
+                stats["ignores"] += 1
+                continue
             conf = 1 if src_name == "OpenStreetMap" else 0
-            if height:
+            style = None
+            for site, regles in restyles:
+                if site.contains(c):
+                    style = next(r for r in regles if pg.area >= r["aire_min"])
+            if style:
+                h, hd = style["h"], 0
+            elif height:
                 h, hd = float(height), 1
             elif floors:
                 h, hd = floors * 3.2 + 0.8, 1
@@ -190,6 +248,10 @@ def main(zid, lat0, lon0, hx, hz, dem_path, out):
                 item["n"] = name
             if cat:
                 item["k"] = cat
+            if style:   # couleurs d'après photos (ex. hôpital : blanc / brique rouge)
+                item["fc"], item["tc"] = style["fc"], style["tc"]
+                if style.get("principal") and (principal is None or pg.area > principal[0]):
+                    principal = (pg.area, item)
             chunks[key(c.x, c.y)]["b"].append(item)
             stats["confirmee" if conf else "satellite"] += 1
             stats["hauteur_documentee"] += hd
@@ -322,6 +384,7 @@ def main(zid, lat0, lon0, hx, hz, dem_path, out):
         "id": zid, "origine": [lat0, lon0], "demi": max(hx, hz), "demi_x": hx, "demi_z": hz,
         "tuile": CHUNK, "n": max(ncx, ncz), "nx": ncx, "nz": ncz,
         "relief": {"pas": STEP, "n": nx, "nx": nx, "nz": nz, "base_m": round(base, 1)},
+        "monuments": {**sortie_monuments, **({"hopital_principal": {"p": principal[1]["p"], "h": principal[1]["h"]}} if principal else {})},
         "tuiles": liste,
         "stats": {**stats, "arbres_reels": reels, "arbres_estimes": estimes, "routes": len(reseau), "lieux": len(lieux)},
         "attribution": "© contributeurs OpenStreetMap (ODbL) · © Overture Maps Foundation · Google Open Buildings (CC BY 4.0) "
@@ -333,7 +396,8 @@ def main(zid, lat0, lon0, hx, hz, dem_path, out):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 7:
+    if len(sys.argv) not in (7, 8):
         sys.exit(__doc__)
     dims = [float(v) for v in sys.argv[4].lower().split("x")]
-    main(sys.argv[1], float(sys.argv[2]), float(sys.argv[3]), dims[0], dims[-1], sys.argv[5], sys.argv[6])
+    monuments = json.load(open(sys.argv[7], encoding="utf-8")) if len(sys.argv) > 7 else {}
+    main(sys.argv[1], float(sys.argv[2]), float(sys.argv[3]), dims[0], dims[-1], sys.argv[5], sys.argv[6], monuments)
