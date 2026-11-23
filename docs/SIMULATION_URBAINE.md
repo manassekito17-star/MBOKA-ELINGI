@@ -3,7 +3,7 @@
 Module « vie urbaine » du mode jeu web (`web/kinshasa/jeu/`).
 Ce document dit **ce qui est réel, ce qui est simulé, ce qui est testé, et ce qui manque**.
 
-> **Zones couvertes : Limete — Tour de l'Échangeur (3,2 × 3,2 km), la Gombe (9,2 × 4 km) et Lingwala / Kasa-Vubu (2,8 × 4,6 km, `jeu/?zone=centre`).**
+> **Zones couvertes : Limete — Tour de l'Échangeur (3,2 × 3,2 km), la Gombe (9,2 × 4 km), Lingwala / Kasa-Vubu (2,8 × 4,6 km, `jeu/?zone=centre`) et Kalamu (2,6 × 4,5 km, `jeu/?zone=kalamu`).**
 > Le reste de Kinshasa n'est pas encore jouable en mode GTA.
 >
 > La zone « Gombe » est un rectangle qui couvre toute la commune de la Gombe (12,3 km²), une partie du fleuve Congo
@@ -155,7 +155,7 @@ La caméra ne traverse pas les murs : un rayon détecte le mur et rapproche la c
 ## 4. Scénarios de test (exécutés)
 
 Commande : `cd web/kinshasa/jeu && npm test`.
-Résultat au 22/11/2026 : **22 tests sur 22 réussis**. Il y a 13 tests de physique et de géographie (dont le relief des zones rectangulaires), et 9 scénarios de simulation.
+Résultat au 23/11/2026 : **23 tests sur 23 réussis**. Il y a 13 tests de physique et de géographie (dont le relief des zones rectangulaires), et 10 scénarios de simulation.
 
 Les scénarios sont dans `tests/simulation.test.js`. Chacun vérifie aussi qu'**aucun véhicule n'en chevauche un autre**.
 
@@ -170,9 +170,10 @@ Les scénarios sont dans `tests/simulation.test.js`. Chacun vérifie aussi qu'**
 | **G** — Heures de pointe | Il y a plus de véhicules à 8 h qu'à 13 h, et plus à 13 h qu'à 3 h. La vitesse est plus élevée la nuit qu'en pointe. | ✅ |
 | **H** — Accident | Le véhicule accidenté est immobile en 5 s, l'accident est ensuite dégagé, sans chevauchement | ✅ |
 | **J** — Zone Lingwala / Kasa-Vubu | Contours réels des 3 monuments présents, ligne réelle 11, carrefours à feux réels, 10 min à 17 h sans chevauchement ni blocage | ✅ |
+| **K** — Zone de Kalamu | Ligne réelle 11, aucun feu cartographié (tous simulés), 8 min à 17 h sans chevauchement, plus de 250 véhicules et circulation fluide sur les axes | ✅ |
 | **I** — Zone de la Gombe | Les 3 lignes réelles sont créées (dont la 06B en boucle), au moins un carrefour à feux réel, 12 min à 8 h sans chevauchement, chaque bus a avancé pendant les 5 dernières minutes, plus de 250 véhicules et vitesse sur les axes supérieure à 11 km/h | ✅ |
 
-**Scénario E (navigateur).** Test `tests/e2e_navigateur.cjs`, avec Chromium et Playwright (rendu logiciel). **25 vérifications sur 25 réussies.**
+**Scénario E (navigateur).** Test `tests/e2e_navigateur.cjs`, avec Chromium et Playwright (rendu logiciel). **27 vérifications sur 27 réussies.**
 - Carte sans erreur, tuiles chargées, circulation et piétons affichés autour du joueur.
 - Marche et accroupi.
 - Conduite : monter, avancer, freiner, descendre.
@@ -182,6 +183,7 @@ Les scénarios sont dans `tests/simulation.test.js`. Chacun vérifie aussi qu'**
 - Sauvegarde, et aucune erreur JavaScript.
 - Gombe : zone chargée, lignes réelles 02, 06B et 11, circulation affichée, le joueur marche, sauvegarde séparée de celle de Limete.
 - Lingwala / Kasa-Vubu : stade, palais et hôpital construits ; circulation affichée ; le mur du stade arrête le joueur.
+- Kalamu : zone chargée avec la ligne réelle 11 ; circulation affichée.
 - Changement de zone depuis le jeu (retour à Limete).
 
 ### Performances mesurées (machine de test, simulation seule)
@@ -205,7 +207,7 @@ Chargement de la Gombe dans le navigateur de test : environ 7 s. Rendu : environ
 - **Pas d'intérieurs de bâtiments ni de portes ouvrables.** La caméra « intérieure » n'existe que dans les véhicules.
 - L'inclinaison des motos est **visuelle**. Leur physique simulée reste celle de la trajectoire.
 - Les feux non cartographiés et les lignes M1, G1 et G2 sont **simulés** (voir la section 2).
-- **Trois zones** sont jouables : Limete, la Gombe et Lingwala / Kasa-Vubu. Elles sont séparées : on passe de l'une à l'autre par le menu, pas en roulant.
+- **Quatre zones** sont jouables : Limete, la Gombe, Lingwala / Kasa-Vubu et Kalamu. Elles sont séparées : on passe de l'une à l'autre par le menu, pas en roulant.
 - Lingwala / Kasa-Vubu : les trois monuments sont des modèles simplifiés d'après photos, posés sur leurs contours réels OSM. Leurs hauteurs sont estimées (stade ~30 m, palais ~20 m, bâtiments de l'hôpital 4 à 21 m). Les hublots cerclés de rouge de l'hôpital (présents dans la version Godot) ne sont pas encore reproduits sur le web, et il n'y a pas d'intérieurs.
 - Gombe :
   - les monuments (Tour Sozacom, gare centrale, Palais de la Nation, Hôtel Fleuve Congo…) ne sont **pas modélisés à part** : ce sont les volumes génériques des données ;

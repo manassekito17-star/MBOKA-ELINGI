@@ -39,6 +39,19 @@ export const ZONES = {
         type: "minibus", depart: "Nord", terminus: "Sud", nbBus: 4 },
     ],
   },
+  kalamu: {
+    nom: "Kalamu — Matonge, Rond-point Victoire",
+    court: "Kalamu",
+    description: "2,6 × 4,5 km : Matonge, Rond-point Victoire, avenues Kasa-Vubu, de la Victoire et de l'Université",
+    depart: { x: -290, z: -960 },         // près du Rond-point Victoire
+    monument: null,
+    lignesSimulees: [
+      { axe: "Avenue de la Victoire", id: "sim_k1", ref: "K1", nom: "Minibus Avenue de la Victoire (ligne simulée)",
+        type: "minibus", depart: "Rond-point Victoire", terminus: "Est", nbBus: 3 },
+      { axe: "Avenue de l’Université", id: "sim_k2", ref: "K2", nom: "Minibus Avenue de l'Université (ligne simulée)",
+        type: "minibus", depart: "Nord", terminus: "Sud", nbBus: 4 },
+    ],
+  },
 };
 
 export const ZONE_DEFAUT = "limete";

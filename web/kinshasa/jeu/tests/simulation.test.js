@@ -4,6 +4,7 @@
 // F : piétons sur un passage piéton      G : heures de pointe / heures creuses
 // H : accident simulé (voie bloquée)     I : zone de la Gombe (réseau réel, lignes, feux)
 // J : zone Lingwala / Kasa-Vubu (ligne réelle 11, feux réels)
+// K : zone de Kalamu (Matonge, Rond-point Victoire)
 // (Le scénario E — joueur qui marche, court, conduit — est testé dans le navigateur :
 //  tests/e2e_navigateur.cjs.)
 import { test } from "node:test";
@@ -258,6 +259,23 @@ test("Scénario J : Lingwala / Kasa-Vubu — ligne réelle, feux réels, circula
   assert.ok(sim.statistiques().feuxReels >= 1);
   sim.definirJoueur(380, -180, false);
   for (let m = 1; m <= 10; m++) {
+    for (let i = 0; i < 60; i++) sim.pas(1);
+    assert.equal(sansCollision(sim), null);
+  }
+  const st = sim.statistiques();
+  assert.ok(st.vehicules > 250 && st.vitesseAxes > 3, JSON.stringify(st));
+});
+
+// K : zone de Kalamu (Matonge, Rond-point Victoire) — aucun feu cartographié : tous simulés.
+test("Scénario K : Kalamu — ligne réelle 11, circulation à l'heure de pointe sans blocage", () => {
+  const Z = new URL("../zones/kalamu/", import.meta.url);
+  const lireZ = (f) => JSON.parse(fs.readFileSync(new URL(f, Z)));
+  const reseau = lireZ("reseau.json"), transports = lireZ("transports.json");
+  const sim = new Circulation(reseau, transports, { heure: 17, niveau: 1, graine: 4 });
+  assert.deepEqual(sim.lignes.map((l) => l.ref), transports.lignes.map((l) => l.ref));
+  assert.equal(sim.statistiques().feuxReels, 0);
+  sim.definirJoueur(-290, -960, false);
+  for (let m = 1; m <= 8; m++) {
     for (let i = 0; i < 60; i++) sim.pas(1);
     assert.equal(sansCollision(sim), null);
   }

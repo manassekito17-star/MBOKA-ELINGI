@@ -10,9 +10,9 @@
 | Mode | Couverture | Contenu |
 |---|---|---|
 | **Carte 3D** (type Google Earth), `web/kinshasa/` | **Toute l'agglomération** : 15,15–15,62 °E et 4,27–4,62 °S, soit environ 52 × 39 km | 1 381 865 bâtiments, 112 127 tronçons de route, 7 409 lieux nommés, fleuve et cours d'eau, limites des communes et quartiers, relief réel, image satellite, recherche, fiche de chaque bâtiment avec son niveau de confiance |
-| **Jeu** (type GTA), `web/kinshasa/jeu/` | **Trois zones** : Limete (3,2 × 3,2 km autour de la Tour de l'Échangeur), la Gombe (9,2 × 4 km le long du fleuve) et Lingwala / Kasa-Vubu (2,8 × 4,6 km) | Limete : 28 636 bâtiments réels ; Gombe : 42 933 ; Lingwala / Kasa-Vubu : 31 674 ; marche, course et saut ; 6 véhicules conduisibles (berline, taxi, minibus 207, bus, camion, moto) ; circulation et piétons ; cycle jour/nuit ; pluie ; son ; sauvegarde |
+| **Jeu** (type GTA), `web/kinshasa/jeu/` | **Quatre zones** : Limete (3,2 × 3,2 km autour de la Tour de l'Échangeur), la Gombe (9,2 × 4 km le long du fleuve, Barumbu et Grand Marché compris), Lingwala / Kasa-Vubu (2,8 × 4,6 km) et Kalamu (2,6 × 4,5 km) | Limete : 28 636 bâtiments réels ; Gombe : 42 933 ; Lingwala / Kasa-Vubu : 31 674 ; Kalamu : 37 971 ; marche, course et saut ; 6 véhicules conduisibles (berline, taxi, minibus 207, bus, camion, moto) ; circulation et piétons ; cycle jour/nuit ; pluie ; son ; sauvegarde |
 
-**Le mode jeu ne couvre pas encore toute la ville.** Seules les zones de Limete, de la Gombe et de Lingwala / Kasa-Vubu sont jouables. Le bouton « ▶ Jouer » de la carte ouvre la zone où l'on se trouve, ou propose d'aller à la plus proche. Dans le jeu, le bouton « Changer de zone » (touche J) passe de l'une à l'autre.
+**Le mode jeu ne couvre pas encore toute la ville.** Seules les zones de Limete, de la Gombe, de Lingwala / Kasa-Vubu et de Kalamu sont jouables. Le bouton « ▶ Jouer » de la carte ouvre la zone où l'on se trouve, ou propose d'aller à la plus proche. Dans le jeu, le bouton « Changer de zone » (touche J) passe de l'une à l'autre.
 
 Le jeu Godot (`game/`) reste en place et fonctionnel. Il n'a pas été modifié.
 
@@ -154,7 +154,7 @@ Chaque commune suit les mêmes 5 étapes :
 | 1 | **Limete** (Échangeur) | Tour de l'Échangeur, boulevard Lumumba, passerelles, FIKIN | ✅ Prototype jouable |
 | 2 | **Gombe** | Boulevard du 30 Juin, Tour Sozacom, Hôtel du Fleuve, gare centrale, port, Palais de la Nation, bord du fleuve | ✅ Prototype jouable : bâtiments, rues, fleuve et transports réels. Les monuments ne sont pas encore modélisés à part (ce sont les volumes génériques des données). |
 | 3 | **Lingwala / Kasa-Vubu** | Stade des Martyrs, Palais du Peuple, Hôpital du Cinquantenaire | ✅ Prototype jouable : les trois monuments sont modélisés sur leurs contours OSM réels (formes d'après photos, hauteurs estimées) |
-| 4 | **Barumbu / Kinshasa / Kalamu** | Marché central, Matonge, Rond-point Victoire | À faire |
+| 4 | **Barumbu / Kinshasa / Kalamu** | Marché central, Matonge, Rond-point Victoire | ✅ Barumbu et le Grand Marché sont dans la zone de la Gombe ; Kalamu (Matonge, Rond-point Victoire) est une zone à part. Pas de monument modélisé à part. |
 | 5 | **Lemba / Mont-Ngafula** | Université de Kinshasa (UNIKIN), collines | À faire |
 | 6 | **N'djili / Masina** | Aéroport international de N'djili | À faire |
 | 7 | Autres communes | Uniquement des zones urbaines denses ; Maluku et Nsele sont surtout rurales | À faire |
@@ -171,6 +171,7 @@ Chaque commune suit les mêmes 5 étapes :
 | Zone de jeu de Limete (10 km²) | 4,4 Mo |
 | Zone de jeu de la Gombe (37 km², dont une partie de fleuve) | 9,6 Mo |
 | Zone de jeu de Lingwala / Kasa-Vubu (13 km²) | 5,3 Mo |
+| Zone de jeu de Kalamu (12 km²) | 5,8 Mo |
 | Personnages et animations | 17 Mo |
 
 **Hébergement** : ce sont uniquement des fichiers statiques, sans serveur à faire tourner.
@@ -206,7 +207,9 @@ python tools/jumeau/decouper_zone.py limete -4.374384 15.345467 1600 data/kinsha
 python tools/jumeau/decouper_zone.py gombe -4.3120 15.30485 4600x2000 data/kinshasa/relief_copernicus_glo30.tif web/kinshasa/jeu/zones/gombe
 python tools/jumeau/decouper_zone.py centre -4.3328 15.3034 1400x2300 data/kinshasa/relief_copernicus_glo30.tif web/kinshasa/jeu/zones/centre tools/jumeau/monuments/centre.json
 python tools/jumeau/extraire_transports.py web/kinshasa/jeu/zones/limete
+python tools/jumeau/decouper_zone.py kalamu -4.3496 15.3164 1300x2250 data/kinshasa/relief_copernicus_glo30.tif web/kinshasa/jeu/zones/kalamu
 python tools/jumeau/extraire_transports.py web/kinshasa/jeu/zones/centre
+python tools/jumeau/extraire_transports.py web/kinshasa/jeu/zones/kalamu
 python tools/jumeau/extraire_transports.py web/kinshasa/jeu/zones/gombe
 ```
 

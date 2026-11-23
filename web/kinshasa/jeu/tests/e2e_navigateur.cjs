@@ -134,7 +134,16 @@ const assert = require("node:assert/strict");
   console.log(`   (distance au centre du stade : ${d0.toFixed(1)} m -> ${d1.toFixed(1)} m)`);
   verifier("Lingwala / Kasa-Vubu : le mur du stade arrête le joueur", d0 - d1 > 1 && d1 > d0 - 4);
 
-  // 11. Changer de zone depuis le jeu.
+  // 11. Quatrième zone : Kalamu (Matonge, Rond-point Victoire).
+  await page.goto(base + "/jeu/?zone=kalamu&nouveau=1&qualite=basse");
+  await page.waitForFunction(() => window.__jeu, null, { timeout: 120000 });
+  await page.waitForTimeout(4000);
+  const ek = await etat();
+  const lk = await page.evaluate(() => ({ titre: document.title, lignes: window.__jeu.sim.lignes.map((l) => l.ref) }));
+  verifier("Kalamu : zone chargée avec la ligne réelle 11", lk.titre.includes("Kalamu") && lk.lignes.includes("11") && ek.tuiles >= 9);
+  verifier("Kalamu : circulation affichée autour du joueur", ek.trafic > 50 && ek.rendus > 0 && ek.pietonsRendus > 0);
+
+  // 12. Changer de zone depuis le jeu.
   await page.click("#btn-zone");
   await Promise.all([page.waitForNavigation(), page.click('[data-zone="limete"]')]);
   await page.waitForFunction(() => window.__jeu, null, { timeout: 120000 });

@@ -185,6 +185,7 @@ const ZONES_JOUABLES = [
   { id: "limete", nom: "Limete (Tour de l'Échangeur)", centre: [15.345467, -4.374384], dx: 1550, dz: 1550 },
   { id: "gombe", nom: "Gombe (centre-ville, boulevard du 30 Juin)", centre: [15.30485, -4.312], dx: 4550, dz: 1950 },
   { id: "centre", nom: "Lingwala / Kasa-Vubu (Stade des Martyrs, Palais du Peuple)", centre: [15.3034, -4.3328], dx: 1350, dz: 2250 },
+  { id: "kalamu", nom: "Kalamu (Matonge, Rond-point Victoire)", centre: [15.3164, -4.3496], dx: 1250, dz: 2200 },
 ];
 document.getElementById("jouer").addEventListener("click", () => {
   const c = carte.getCenter();
