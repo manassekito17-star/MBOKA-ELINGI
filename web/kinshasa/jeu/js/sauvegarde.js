@@ -25,6 +25,11 @@ export function charger(zone = "limete") {
       heure: nombre(d.heure, 10) % 24,
       meteo: [0, 1, 2].includes(d.meteo) ? d.meteo : 0,
       argent: Math.max(0, Math.min(1e9, nombre(d.argent, 20000))),
+      banque: Math.max(0, Math.min(1e10, nombre(d.banque, 100000))),
+      sante: Math.max(1, Math.min(100, nombre(d.sante, 100))),
+      stats: { pied: nombre(d.stats?.pied, 0), vehicule: nombre(d.stats?.vehicule, 0), temps: nombre(d.stats?.temps, 0) },
+      missions: { reussies: nombre(d.missions?.reussies, 0), echouees: nombre(d.missions?.echouees, 0), gains: nombre(d.missions?.gains, 0) },
+      date: nombre(d.date, 0),
     };
   } catch {
     return null;
@@ -33,7 +38,7 @@ export function charger(zone = "limete") {
 
 export function enregistrer(etat) {
   try {
-    localStorage.setItem(cle(etat.zone), JSON.stringify({ v: 1, ...etat }));
+    localStorage.setItem(cle(etat.zone), JSON.stringify({ v: 1, ...etat, date: Date.now() }));
     localStorage.setItem(CLE_ZONE, etat.zone);
     return true;
   } catch {

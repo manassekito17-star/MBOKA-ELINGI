@@ -33,7 +33,25 @@ export class Joueur {
     this.tempsCourse = 0;    // la course devient un sprint après 1,5 s
     this.immobile = 0;
     this.verrou = 0;         // animation ponctuelle en cours (interaction…)
+    // Santé et endurance (vrais systèmes : chutes, chocs, course, soins).
+    this.sante = 100;
+    this.endurance = 100;
+    this.essouffle = false;  // endurance épuisée : course impossible jusqu'à 30 %
+    this.depuisDegats = 99;  // secondes depuis la dernière blessure
+    this.reposCourse = 0;
+    this.evenements = [];    // messages pour l'interface (chute, essoufflement…)
   }
+
+  /** Blessure (chute, accident). Renvoie true si le joueur perd connaissance. */
+  degats(n, cause) {
+    if (n <= 0) return false;
+    this.sante = Math.max(0, this.sante - n);
+    this.depuisDegats = 0;
+    this.evenements.push({ type: "degats", n: Math.round(n), cause });
+    return this.sante <= 0;
+  }
+
+  soigner(n) { this.sante = Math.min(100, this.sante + n); }
 
   /** Change l'apparence (éditeur de personnage). */
   changerApparence(apparence) {
@@ -54,6 +72,20 @@ export class Joueur {
     if (!this.actif) { this.perso.mettreAJour(dt); return; }
     this.verrou = Math.max(0, this.verrou - dt);
     const n = this.verrou > 0 ? 0 : Math.hypot(dirX, dirZ);
+    // Endurance : la course et surtout le sprint fatiguent ; récupération au repos.
+    if (this.essouffle && this.endurance > 30) this.essouffle = false;
+    if (this.essouffle || this.accroupi) courir = false;
+    if (courir && n > 0.05) {
+      this.endurance = Math.max(0, this.endurance - dt * (this.tempsCourse > 1.5 ? 11 : 4));
+      this.reposCourse = 0;
+      if (this.endurance <= 0) { this.essouffle = true; this.evenements.push({ type: "essouffle" }); courir = false; }
+    } else {
+      this.reposCourse += dt;
+      if (this.reposCourse > 0.8) this.endurance = Math.min(100, this.endurance + dt * (n > 0.05 ? 7 : 14));
+    }
+    // Santé : récupération lente si aucune blessure depuis 10 s.
+    this.depuisDegats += dt;
+    if (this.depuisDegats > 10 && this.sante > 0) this.sante = Math.min(100, this.sante + dt * 0.6);
     this.tempsCourse = courir && n > 0.05 ? this.tempsCourse + dt : 0;
     let cibleV = 0;
     if (n > 0.05) {
@@ -74,7 +106,10 @@ export class Joueur {
     const mouv = { x: -Math.sin(this.cap) * this.vitesseH * dt, y: this.vy * dt, z: -Math.cos(this.cap) * this.vitesseH * dt };
     this.ctrl.computeColliderMovement(this.collider, mouv);
     const m = this.ctrl.computedMovement();
+    const etaitEnLAir = !this.auSol, vyAvant = this.vy;
     this.auSol = this.ctrl.computedGrounded();
+    // Chute : au-delà d'environ 5 m de chute libre (vitesse > 10 m/s), blessure.
+    if (etaitEnLAir && this.auSol && vyAvant < -10) this.degats((-vyAvant - 10) * 9, "chute");
     const p = this.corps.translation();
     this.corps.setNextKinematicTranslation({ x: p.x + m.x, y: p.y + m.y, z: p.z + m.z });
     this.objet.position.set(p.x + m.x, p.y + m.y, p.z + m.z);

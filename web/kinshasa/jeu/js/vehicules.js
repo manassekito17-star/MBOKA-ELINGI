@@ -227,7 +227,7 @@ export function modele(type, couleur) {
     roues.push({ pivot, roue: r });
   }
   fusionnerParMateriau(g, new Set([...phares, ...arriere]), gyro);
-  g.userData = { type, roues, phares, arriere, gyro };
+  g.userData = { type, roues, phares, arriere, gyro, carros };
   return g;
 }
 
@@ -318,6 +318,44 @@ export class Vehicule {
     this.phares = false;
     this.lumiere = null;
     this.inclinaison = 0;
+    // Systèmes réels du véhicule (affichés par l'interface) :
+    this.odometre = 0;             // distance parcourue (m), sauvegardée
+    this.sante = 100;              // état mécanique (chocs) : < 30 moteur affaibli, 0 en panne
+    this.sirene = false;           // police, ambulance : sirène et gyrophares
+    this.vPrec = 0;
+    this.chocs = [];               // chocs récents { dv } (lus par le jeu pour blesser le conducteur)
+    this.tGyro = 0;
+  }
+
+  /** Rapport affiché (boîte automatique) : P (frein à main), R, N, D — d'après le mouvement réel. */
+  rapport(acc = 0) {
+    const v = this.vitesse();
+    if (this.freinAMain && Math.abs(v) < 0.5) return "P";
+    if (v < -0.3 || (acc < 0 && Math.abs(v) < 0.5)) return "R";
+    if (Math.abs(v) < 0.3 && acc === 0) return "N";
+    return "D";
+  }
+
+  /** Répare (garage, station) : état mécanique à 100 %. */
+  reparer() { this.sante = 100; }
+
+  /** Repeint la carrosserie (nouveau matériau, les autres véhicules gardent le leur). */
+  repeindre(couleur) {
+    const ancien = this.objet.userData.carros;
+    if (!ancien) return;
+    const neuf = ancien.clone();
+    neuf.color.setHex(couleur);
+    this.objet.traverse((o) => { if (o.isMesh && o.material === ancien) o.material = neuf; });
+    this.objet.userData.carros = neuf;
+    this.couleur = couleur;
+  }
+
+  /** Sirène et gyrophares (police, ambulance uniquement). */
+  basculerSirene() {
+    if (!this.objet.userData.gyro.length) return false;
+    this.sirene = !this.sirene;
+    if (!this.sirene) for (const m of this.objet.userData.gyro) m.emissiveIntensity = 0;
+    return true;
   }
 
   /** Commandes : acc (-1..1), dir (-1..1), frein (0..1). */
@@ -328,9 +366,11 @@ export class Vehicule {
     this.direction += (dir * braquageMax - this.direction) * Math.min(1, dt * 6);
     const steer = this.direction * (1 - Math.min(0.6, Math.abs(v) / (t.vmax * 1.4)));
     let force = 0;
-    if (this.carburant > 0) {
-      if (acc > 0 && v < t.vmax) force = -t.force * acc;          // avant = -Z
-      if (acc < 0 && v > -8) force = -t.force * acc * 0.6;        // marche arrière
+    // Moteur endommagé : puissance réduite (< 30 %), panne à 0 %.
+    const puissance = this.sante <= 0 ? 0 : this.sante < 30 ? 0.55 : 1;
+    if (this.carburant > 0 && puissance > 0) {
+      if (acc > 0 && v < t.vmax * (puissance < 1 ? 0.7 : 1)) force = -t.force * acc * puissance;   // avant = -Z
+      if (acc < 0 && v > -8) force = -t.force * acc * 0.6 * puissance;                        // marche arrière
     }
     const roues = positionsRoues(this.type);
     for (let i = 0; i < 4; i++) {
@@ -358,6 +398,21 @@ export class Vehicule {
 
   mettreAJour(dt) {
     this.ctrl.updateVehicle(dt);
+    // Compteur kilométrique et détection des chocs (variation brutale de vitesse).
+    const lv = this.corps.linvel();
+    const vh = Math.hypot(lv.x, lv.z);
+    this.odometre += vh * dt;
+    const dv = Math.abs(vh - this.vPrec);
+    if (dt > 0 && dv / dt > 30 && dv > 2.5) {       // > 3 g : au-delà de tout freinage possible
+      this.sante = Math.max(0, this.sante - (dv - 2) * 7);
+      this.chocs.push({ dv });
+    }
+    this.vPrec = vh;
+    if (this.sirene) {
+      this.tGyro += dt;
+      const f = Math.floor(this.tGyro * 4) % 2;
+      this.objet.userData.gyro.forEach((m, i) => { m.emissiveIntensity = i === f ? 3 : 0.2; });
+    }
     const p = this.corps.translation();
     const q = this.corps.rotation();
     this.objet.position.set(p.x, p.y, p.z);
@@ -411,7 +466,8 @@ export class Vehicule {
 
   etat() {
     const p = this.position();
-    return { type: this.type, couleur: this.couleur, x: p.x, y: p.y, z: p.z, a: this.angle(), c: this.carburant };
+    return { type: this.type, couleur: this.couleur, x: p.x, y: p.y, z: p.z, a: this.angle(), c: this.carburant,
+      odo: Math.round(this.odometre), s: Math.round(this.sante) };
   }
 }
 

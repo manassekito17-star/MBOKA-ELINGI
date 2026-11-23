@@ -140,6 +140,8 @@ Overture Maps / OSM / Copernicus ──► tools/jumeau/*.py (extraction, décou
 | Prix, carburant, services | **Simulé** : simulation de jeu |
 | Soleil | **Calculé** à la latitude de Kinshasa (−4,35°) |
 
+**Interface de jeu** (HUD, mini-carte, GPS, menu pause, missions, commandes clavier, manette et tactile) : voir [INTERFACE.md](INTERFACE.md).
+
 ## 5. Plan de réalisation par communes
 
 Chaque commune suit les mêmes 5 étapes :
@@ -212,6 +214,9 @@ cd web/kinshasa/jeu && npm install && npm test
 
 # 3. Test de bout en bout dans un navigateur (Playwright)
 node web/kinshasa/jeu/tests/e2e_navigateur.cjs http://localhost:8080
+
+# 4. Test de l'interface de jeu (chaque menu et chaque bouton)
+node web/kinshasa/jeu/tests/e2e_interface.cjs http://localhost:8080
 ```
 
 ### Reconstruire les données

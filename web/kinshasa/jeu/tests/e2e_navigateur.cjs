@@ -65,12 +65,13 @@ const assert = require("node:assert/strict");
   await page.keyboard.press("ControlLeft");
 
   // 6. Éditeur de personnage : style « Sapeur ».
-  await page.click("#btn-perso");
-  await page.click('[data-style="sapeur"]');
+  await page.keyboard.press("Escape"); await page.waitForTimeout(400);
+  await page.click('[data-onglet="personnage"]');
+  await page.click('#menu [data-style="sapeur"]');
   await page.waitForTimeout(500);
   verifier("éditeur : apparence appliquée et enregistrée", await page.evaluate(() =>
     JSON.parse(localStorage.getItem("kinshasa3d.personnage.v1")).haut === "#c2185b"));
-  await page.click("[data-fermer]");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(300);
 
   // 7. Prendre une moto-taxi (simulée) comme passager, puis descendre.
   const pris = await page.evaluate(() => {
@@ -144,8 +145,9 @@ const assert = require("node:assert/strict");
   verifier("Kalamu : circulation affichée autour du joueur", ek.trafic > 50 && ek.rendus > 0 && ek.pietonsRendus > 0);
 
   // 12. Changer de zone depuis le jeu.
-  await page.click("#btn-zone");
-  await Promise.all([page.waitForNavigation(), page.click('[data-zone="limete"]')]);
+  await page.keyboard.press("Escape"); await page.waitForTimeout(400);
+  await page.click('[data-onglet="zones"]');
+  await Promise.all([page.waitForNavigation(), page.click('#menu [data-zone="limete"]')]);
   await page.waitForFunction(() => window.__jeu, null, { timeout: 120000 });
   verifier("changement de zone : retour à Limete", (await page.title()).includes("Limete"));
 
@@ -159,7 +161,7 @@ const assert = require("node:assert/strict");
     await tel.waitForFunction(() => window.__jeu, null, { timeout: 120000 });
     await tel.waitForTimeout(2000);
     const r = await tel.evaluate(() => {
-      const sel = ["#hud .bloc", "#hud-trafic", "#message", "#hud-vitesse", "#lieu", "#tactile .joy", "#tactile button", "#tourner"];
+      const sel = ["#radar", "#haut-droite", "#btn-menu", "#gps-bandeau", "#objectif", "#interactions", "#tableau-bord", "#tactile .joy", "#tactile button", "#tourner"];
       const els = [];
       for (const s of sel) for (const e of document.querySelectorAll(s)) {
         if (e.closest("[hidden]") || getComputedStyle(e).display === "none") continue;

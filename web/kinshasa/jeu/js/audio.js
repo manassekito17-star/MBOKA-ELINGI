@@ -4,6 +4,15 @@ export class Audio {
   constructor() {
     this.ctx = null;
     this.actif = false;
+    this.volume = 0.6;            // volume général (réglable dans le menu)
+    this.facteurAmbiance = 1;     // rumeur de la ville (réglable)
+  }
+
+  /** Volume général (0..1). */
+  regler(volume, ambiance) {
+    this.volume = volume;
+    this.facteurAmbiance = ambiance;
+    if (this.maitre) this.maitre.gain.value = volume;
   }
 
   /** Doit être appelé après un geste de l'utilisateur (règle des navigateurs). */
@@ -13,7 +22,7 @@ export class Audio {
     if (!C) return;
     const ctx = (this.ctx = new C());
     this.maitre = ctx.createGain();
-    this.maitre.gain.value = 0.6;
+    this.maitre.gain.value = this.volume;
     this.maitre.connect(ctx.destination);
     const bruit = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     const d = bruit.getChannelData(0);
@@ -73,7 +82,7 @@ export class Audio {
   mettreAJour(dt, { enVoiture, regime, pluie, nuit }) {
     if (!this.actif) return;
     const t = this.ctx.currentTime;
-    this.ville.gain.setTargetAtTime(0.35 * (1 - 0.6 * nuit), t, 0.5);
+    this.ville.gain.setTargetAtTime(0.35 * (1 - 0.6 * nuit) * this.facteurAmbiance, t, 0.5);
     this.pluie.gain.setTargetAtTime(0.5 * pluie, t, 0.5);
     this.moteur.gain.setTargetAtTime(enVoiture ? 0.06 + 0.06 * regime : 0, t, 0.1);
     this.moteurOsc.frequency.setTargetAtTime(45 + regime * 140, t, 0.1);
@@ -82,6 +91,6 @@ export class Audio {
 
   basculer() {
     if (!this.ctx) return this.demarrer();
-    this.maitre.gain.value = this.maitre.gain.value > 0 ? 0 : 0.6;
+    this.maitre.gain.value = this.maitre.gain.value > 0 ? 0 : this.volume;
   }
 }

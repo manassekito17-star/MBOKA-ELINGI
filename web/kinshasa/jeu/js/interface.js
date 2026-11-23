@@ -103,7 +103,7 @@ export function panneauTransports(racine, sim, nomZone = "Limete") {
   });
   let minuterie = null;
   return {
-    ouvrir() { racine.hidden = false; rendre(); clearInterval(minuterie); minuterie = setInterval(() => { if (racine.hidden) clearInterval(minuterie); else rendre(); }, 2000); },
+    ouvrir() { racine.hidden = false; rendre(); clearInterval(minuterie); minuterie = setInterval(() => { if (racine.hidden || !racine.isConnected) clearInterval(minuterie); else rendre(); }, 2000); },
   };
 }
 

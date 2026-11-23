@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <title>Kinshasa 3D — mode jeu</title>
   <meta name="description" content="Explorer Limete, la Gombe, Lingwala, Kasa-Vubu et Kalamu (Kinshasa) à pied et en véhicule, sur la vraie carte.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="jeu.css">
+  <link rel="stylesheet" href="ihm.css">
   <!-- Installation comme application (écran d'accueil) : ouverture en plein écran, à l'horizontale. -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0c0d10">
@@ -33,64 +37,91 @@
     <p id="chargement-texte">Démarrage…</p>
   </div>
 
-  <div id="hud">
-    <div class="bloc"><span id="hud-heure">--:--</span><span id="hud-argent">--</span></div>
-    <a id="hud-carte" class="bloc lien" href="../index.html" title="Vue satellite / carte">🌍<span class="libelle"> Vue satellite / carte</span></a>
-    <div class="boutons-hud">
-      <button id="btn-bus" class="bloc lien" title="Lignes de bus et horaires (B)">🚌<span class="libelle"> Lignes</span></button>
-      <button id="btn-perso" class="bloc lien" title="Éditeur de personnage (U)">👕<span class="libelle"> Personnage</span></button>
+  <!-- Interface de jeu (HUD) : chaque élément affiche une vraie valeur du jeu. -->
+  <div id="ihm">
+    <div id="notifs" aria-live="polite"></div>
+    <div id="gps-bandeau" hidden></div>
+    <div id="haut-droite">
+      <div id="argent">--</div>
+      <div id="heure">--:--</div>
+      <div id="mission-chrono" hidden></div>
     </div>
-    <button id="btn-zone" class="bloc lien" title="Changer de zone jouable (J)">🗺️<span class="libelle"> Changer de zone</span></button>
+    <button id="btn-menu" title="Menu pause (Échap)" aria-label="Menu pause">☰</button>
+    <div id="radar">
+      <canvas id="minicarte"></canvas>
+      <div class="zoom">
+        <button data-zoom="+" title="Zoom avant (=)">+</button>
+        <button data-zoom="-" title="Zoom arrière (-)">−</button>
+        <button data-zoom="carte" title="Grande carte (M)">⤢</button>
+      </div>
+      <div class="barres">
+        <div class="jauge sante" title="Santé"><b id="barre-sante"></b></div>
+        <div class="jauge endurance" title="Endurance"><b id="barre-endurance"></b></div>
+      </div>
+      <div id="rue"></div>
+    </div>
+    <div id="objectif" hidden></div>
+    <div id="interactions" hidden><ul></ul></div>
+    <div id="tableau-bord" hidden>
+      <div class="tb-ligne"><span id="tb-vitesse">0</span><span class="tb-unite">km/h</span><span id="tb-rapport">P</span></div>
+      <div id="tb-nom"></div>
+      <div class="tb-jauge" title="Carburant"><i>⛽</i><div class="jauge carbu"><b id="tb-carburant"></b></div></div>
+      <div class="tb-jauge" title="État mécanique"><i>🔧</i><div class="jauge meca"><b id="tb-etat"></b></div></div>
+      <div class="tb-bas">
+        <span id="tb-odo" title="Compteur kilométrique">—</span>
+        <span class="voyants">
+          <i id="v-phares" title="Phares">💡</i><i id="v-frein" title="Frein à main">Ⓟ</i><i id="v-carbu" title="Réserve de carburant">⛽</i><i id="v-moteur" title="Moteur endommagé">⚠</i><i id="v-sirene" title="Sirène">🚨</i>
+        </span>
+      </div>
+      <div id="tb-action" hidden></div>
+    </div>
   </div>
-  <div id="hud-trafic"></div>
+
+  <!-- Menu pause -->
+  <div id="menu" hidden>
+    <div class="menu-fond"></div>
+    <div class="menu-cadre">
+      <header class="menu-tete">
+        <div><h1>MBOKA ELENGI</h1><p id="menu-sous-titre">Kinshasa 3D</p></div>
+        <div id="menu-infos"></div>
+      </header>
+      <nav class="menu-onglets" role="tablist">
+        <button data-onglet="reprendre">▶ Reprendre</button>
+        <button data-onglet="carte">Carte</button>
+        <button data-onglet="personnage">Personnage</button>
+        <button data-onglet="vehicules">Véhicules</button>
+        <button data-onglet="missions">Missions</button>
+        <button data-onglet="transports">Transports</button>
+        <button data-onglet="zones">Zones</button>
+        <button data-onglet="parametres">Paramètres</button>
+        <button data-onglet="sauvegarde">Sauvegarde</button>
+        <button data-onglet="quitter">Quitter</button>
+      </nav>
+      <section id="menu-contenu"></section>
+      <footer class="menu-pied" id="menu-pied"></footer>
+    </div>
+  </div>
   <div id="panneau-perso" class="panneau" hidden></div>
   <div id="panneau-transports" class="panneau" hidden></div>
   <div id="panneau-zones" class="panneau" hidden></div>
-  <div id="hud-vitesse" hidden>
-    <div><b id="vitesse">0</b> km/h</div>
-    <div id="vehicule-nom"></div>
-    <div class="carbu"><span id="carburant"></span></div>
-  </div>
-  <div id="lieu" hidden></div>
-  <div id="message" hidden></div>
-  <div id="hud-pos"></div>
+  <p id="attribution" class="note" hidden></p>
 
-  <div id="aide" hidden>
-    <h2>Commandes</h2>
-    <table>
-      <tr><td>Z Q S D (AZERTY) / W A S D / flèches</td><td>Marcher · conduire</td></tr>
-      <tr><td>Maj (maintenir) · Alt · Ctrl</td><td>Courir puis sprinter · marcher lentement · s'accroupir</td></tr>
-      <tr><td>Espace</td><td>Sauter · frein</td></tr>
-      <tr><td>Souris (cliquer pour capturer)</td><td>Tourner la caméra</td></tr>
-      <tr><td>V · C</td><td>Changer de caméra (3e/1re personne, aérienne, libre ; véhicule : poursuite, intérieure, aérienne)</td></tr>
-      <tr><td>F</td><td>Monter / descendre de vos véhicules</td></tr>
-      <tr><td>E</td><td>Prendre un bus (à l'arrêt), une moto-taxi ou un taxi · descendre · interagir</td></tr>
-      <tr><td>B · U · J</td><td>Lignes de bus et horaires · éditeur de personnage · changer de zone (Limete, Gombe, Lingwala / Kasa-Vubu, Kalamu)</td></tr>
-      <tr><td>G · K</td><td>Densité de circulation (faible, moyenne, intense) · provoquer un accident simulé</td></tr>
-      <tr><td>L · H</td><td>Phares · klaxon</td></tr>
-      <tr><td>T · N</td><td>Météo · avancer l'heure (pointes : 6 h–9 h et 16 h–19 h)</td></tr>
-      <tr><td>P · M</td><td>Sauvegarder · son</td></tr>
-    </table>
-    <p class="note">Bâtiments, routes, lieux, lignes de bus cartographiées (ex. 02 à Limete), arrêts nommés, passages piétons et feux cartographiés : données réelles (OpenStreetMap / Overture).
-      Circulation, piétons, feux non cartographiés, lignes de minibus M1, G1, G2, arrêts « simulés », horaires, prix et lampadaires : <b>simulés</b>.
-      Hauteur de la plupart des bâtiments : <b>estimée</b>. Style des bâtiments (type, couleurs, toiture, fenêtres, balcons,
-      équipements) : <b>généré</b> d'après la taille et la catégorie réelles. Espèces d'arbres, arbres des cours et d'alignement, murs de clôture et portails : <b>estimés</b>.</p>
-    <p id="attribution" class="note"></p>
-  </div>
-
+  <!-- Commandes tactiles (téléphone) : boutons différents à pied et en véhicule, disposition modifiable. -->
   <div id="tactile" hidden>
-    <div class="joy"><i></i></div>
+    <div class="joy" data-id="joy"><i></i></div>
     <div class="boutons">
-      <button data-touche="KeyF">F<small>véhicule</small></button>
-      <button data-touche="KeyE">E<small>agir</small></button>
-      <button data-touche="Space">⤒<small>saut</small></button>
-      <button data-touche="frein">■<small>frein</small></button>
-      <button data-touche="course">»<small>courir</small></button>
-      <button data-touche="KeyV">◎<small>caméra</small></button>
-      <button data-touche="ControlLeft">⤓<small>accroupi</small></button>
-      <button data-touche="Escape">?<small>aide</small></button>
-      <button data-touche="pleinEcran" title="Plein écran à l'horizontale">⛶<small>écran</small></button>
-      <button data-touche="KeyJ" title="Changer de zone">🗺<small>zone</small></button>
+      <button data-id="vehicule" data-action="vehicule" class="t-tous">F<small>véhicule</small></button>
+      <button data-id="interagir" data-action="interagir" class="t-pied">E<small>agir</small></button>
+      <button data-id="sauter" data-action="sauter" class="t-pied">⤒<small>saut</small></button>
+      <button data-id="courir" data-bascule="courir" class="t-pied">»<small>courir</small></button>
+      <button data-id="accroupir" data-action="accroupir" class="t-pied">⤓<small>accroupi</small></button>
+      <button data-id="gaz" data-tenir="gaz" class="t-vehicule pedale">▲<small>accélérer</small></button>
+      <button data-id="frein" data-tenir="frein" class="t-vehicule pedale">▼<small>frein</small></button>
+      <button data-id="klaxon" data-action="klaxon" class="t-vehicule">📯<small>klaxon</small></button>
+      <button data-id="phares" data-action="phares" class="t-vehicule">💡<small>phares</small></button>
+      <button data-id="actionVehicule" data-action="actionVehicule" class="t-vehicule">R<small>action</small></button>
+      <button data-id="camera" data-action="camera" class="t-tous">◎<small>caméra</small></button>
+      <button data-id="pleinEcran" data-action="pleinEcran" class="t-tous" title="Plein écran à l'horizontale">⛶<small>écran</small></button>
     </div>
   </div>
   <div id="tourner" hidden>
