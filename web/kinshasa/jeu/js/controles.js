@@ -1,5 +1,23 @@
 // Commandes : clavier (AZERTY et QWERTY grâce aux touches physiques), souris,
 // manette, et commandes tactiles (joystick + boutons) sur téléphone.
+/**
+ * Plein écran + verrouillage à l'horizontale (doit suivre un geste de l'utilisateur).
+ * Android (Chrome, Samsung Internet) : plein écran et rotation verrouillée.
+ * iPhone (Safari) : pas d'API de plein écran pour une page ; on renvoie false, et le jeu
+ * conseille « Partager > Sur l'écran d'accueil » (le jeu s'ouvre alors sans barre d'adresse).
+ */
+export async function pleinEcranHorizontal() {
+  const el = document.documentElement;
+  try {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (el.requestFullscreen) await el.requestFullscreen({ navigationUI: "hide" });
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    }
+  } catch { /* refusé par le navigateur */ }
+  try { await screen.orientation?.lock?.("landscape"); } catch { /* non pris en charge (iPhone, ordinateur) */ }
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
 export class Controles {
   constructor(element) {
     this.touches = new Set();
@@ -89,8 +107,31 @@ export class Controles {
       dernier = [e.clientX, e.clientY, e.pointerId];
     });
     this.element.addEventListener("pointerup", () => { dernier = null; });
+    // Bannière « tournez le téléphone » (téléphone tenu verticalement ; peut être fermée).
+    const tourner = document.getElementById("tourner");
+    const aide = (ok) => {
+      if (!ok && tourner) {
+        tourner.hidden = false;
+        tourner.querySelector("span").textContent = "Sur iPhone : touchez Partager puis « Sur l'écran d'accueil » pour jouer en plein écran. Tournez ensuite le téléphone.";
+      }
+    };
+    if (tourner) {
+      let ferme = false;
+      try { ferme = sessionStorage.getItem("kinshasa3d.tourner") === "1"; } catch { /* stockage indisponible */ }
+      tourner.hidden = ferme;
+      tourner.querySelector("[data-plein-ecran]").addEventListener("click", async () => { const ok = await pleinEcranHorizontal(); if (ok) tourner.hidden = true; else aide(ok); });
+      tourner.querySelector(".fermer").addEventListener("click", () => {
+        tourner.hidden = true;
+        try { sessionStorage.setItem("kinshasa3d.tourner", "1"); } catch { /* ignoré */ }
+      });
+    }
     for (const b of zone.querySelectorAll("[data-touche]")) {
       const code = b.dataset.touche;
+      if (code === "pleinEcran") {   // « click » : seul un geste complet autorise le plein écran
+        b.addEventListener("pointerdown", (e) => e.stopPropagation());
+        b.addEventListener("click", async () => aide(await pleinEcranHorizontal()));
+        continue;
+      }
       b.addEventListener("pointerdown", (e) => {
         e.stopPropagation();
         if (code === "course") this.tactile.course = !this.tactile.course;

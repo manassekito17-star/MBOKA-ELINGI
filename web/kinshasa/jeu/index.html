@@ -6,6 +6,13 @@
   <title>Kinshasa 3D — mode jeu</title>
   <meta name="description" content="Explorer Limete, la Gombe, Lingwala, Kasa-Vubu et Kalamu (Kinshasa) à pied et en véhicule, sur la vraie carte.">
   <link rel="stylesheet" href="jeu.css">
+  <!-- Installation comme application (écran d'accueil) : ouverture en plein écran, à l'horizontale. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0c0d10">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="assets/icones/icone-192.png">
   <script type="importmap">
   {
     "imports": {
@@ -28,12 +35,12 @@
 
   <div id="hud">
     <div class="bloc"><span id="hud-heure">--:--</span><span id="hud-argent">--</span></div>
-    <a id="hud-carte" class="bloc lien" href="../index.html">🌍 Vue satellite / carte</a>
+    <a id="hud-carte" class="bloc lien" href="../index.html" title="Vue satellite / carte">🌍<span class="libelle"> Vue satellite / carte</span></a>
     <div class="boutons-hud">
-      <button id="btn-bus" class="bloc lien" title="Lignes de bus et horaires (B)">🚌 Lignes</button>
-      <button id="btn-perso" class="bloc lien" title="Éditeur de personnage (U)">👕 Personnage</button>
+      <button id="btn-bus" class="bloc lien" title="Lignes de bus et horaires (B)">🚌<span class="libelle"> Lignes</span></button>
+      <button id="btn-perso" class="bloc lien" title="Éditeur de personnage (U)">👕<span class="libelle"> Personnage</span></button>
     </div>
-    <button id="btn-zone" class="bloc lien" title="Changer de zone jouable (J)">🗺️ Changer de zone</button>
+    <button id="btn-zone" class="bloc lien" title="Changer de zone jouable (J)">🗺️<span class="libelle"> Changer de zone</span></button>
   </div>
   <div id="hud-trafic"></div>
   <div id="panneau-perso" class="panneau" hidden></div>
@@ -82,7 +89,13 @@
       <button data-touche="KeyV">◎<small>caméra</small></button>
       <button data-touche="ControlLeft">⤓<small>accroupi</small></button>
       <button data-touche="Escape">?<small>aide</small></button>
+      <button data-touche="pleinEcran" title="Plein écran à l'horizontale">⛶<small>écran</small></button>
+      <button data-touche="KeyJ" title="Changer de zone">🗺<small>zone</small></button>
     </div>
+  </div>
+  <div id="tourner" hidden>
+    <span>↻ Tournez le téléphone : le jeu se joue mieux à l'horizontale.</span>
+    <div class="actions-tourner"><button data-plein-ecran>Plein écran</button><button class="fermer" aria-label="Fermer">✕</button></div>
   </div>
 
   <script type="module" src="js/main.js"></script>

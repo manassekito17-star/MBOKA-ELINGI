@@ -185,7 +185,9 @@ async function demarrer() {
       joueur.monter(meilleur.objet, PLACES[meilleur.type][0], true);
       ctl.lacet = 0;
       etat.camVeh = 0;
-      message(`${TYPES[meilleur.type].nom} — Z/W accélérer, S freiner/reculer, Q/A D tourner, F descendre, C ou V caméra`);
+      message(mobile
+        ? `${TYPES[meilleur.type].nom} — joystick : avancer, reculer, tourner · ■ frein · F : descendre · ◎ : caméra`
+        : `${TYPES[meilleur.type].nom} — Z/W accélérer, S freiner/reculer, Q/A D tourner, F descendre, C ou V caméra`);
     } else {
       const v = etat.vehicule;
       if (Math.abs(v.vitesse()) > 3) return message("Ralentissez pour descendre.");
@@ -417,7 +419,9 @@ async function demarrer() {
   post = QUALITE === "haute" && params.get("post") !== "0" ? await creerPostTraitement(renderer, scene, camera) : null;
   renderer.render(scene, camera);
   $("chargement").hidden = true;
-  message(`Bienvenue à ${CONFIG.court} ! Z/W Q/A S D : marcher · Maj : courir · Alt : marcher lentement · Ctrl : s'accroupir · F : vos véhicules · E : bus, moto-taxi, interagir · V : caméra · Échap : aide`, 8);
+  message(mobile
+    ? `Bienvenue à ${CONFIG.court} ! Joystick : marcher · glisser l'écran : regarder · F : véhicule · E : agir · ⛶ : plein écran à l'horizontale`
+    : `Bienvenue à ${CONFIG.court} ! Z/W Q/A S D : marcher · Maj : courir · Alt : marcher lentement · Ctrl : s'accroupir · F : vos véhicules · E : bus, moto-taxi, interagir · V : caméra · Échap : aide`, 8);
   const unGeste = () => { audio.demarrer(); removeEventListener("pointerdown", unGeste); removeEventListener("keydown", unGeste); };
   addEventListener("pointerdown", unGeste);
   addEventListener("keydown", unGeste);

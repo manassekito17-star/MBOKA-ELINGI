@@ -149,6 +149,37 @@ const assert = require("node:assert/strict");
   await page.waitForFunction(() => window.__jeu, null, { timeout: 120000 });
   verifier("changement de zone : retour à Limete", (await page.title()).includes("Limete"));
 
+  // 13. Téléphone tenu à l'horizontale : commandes tactiles visibles, aucun élément ne se chevauche.
+  const { devices } = require("playwright");
+  for (const appareil of ["Pixel 7 landscape", "iPhone 13 landscape"]) {
+    const ctx = await navigateur.newContext({ ...devices[appareil] });
+    const tel = await ctx.newPage();
+    tel.on("pageerror", (e) => erreurs.push(appareil + " : " + e.message));
+    await tel.goto(base + "/jeu/?zone=limete&nouveau=1");
+    await tel.waitForFunction(() => window.__jeu, null, { timeout: 120000 });
+    await tel.waitForTimeout(2000);
+    const r = await tel.evaluate(() => {
+      const sel = ["#hud .bloc", "#hud-trafic", "#message", "#hud-vitesse", "#lieu", "#tactile .joy", "#tactile button", "#tourner"];
+      const els = [];
+      for (const s of sel) for (const e of document.querySelectorAll(s)) {
+        if (e.closest("[hidden]") || getComputedStyle(e).display === "none") continue;
+        const b = e.getBoundingClientRect();
+        if (b.width && b.height) els.push({ n: s, b, e });
+      }
+      const pb = [];
+      for (const a of els) if (a.b.left < -1 || a.b.top < -1 || a.b.right > innerWidth + 1 || a.b.bottom > innerHeight + 1) pb.push("hors écran " + a.n);
+      for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
+        const a = els[i], c = els[j];
+        if (a.e.contains(c.e) || c.e.contains(a.e)) continue;
+        if (a.b.left < c.b.right - 1 && c.b.left < a.b.right - 1 && a.b.top < c.b.bottom - 1 && c.b.top < a.b.bottom - 1) pb.push(a.n + " / " + c.n);
+      }
+      return { paysage: innerWidth > innerHeight, tactile: !document.getElementById("tactile").hidden, pb };
+    });
+    if (r.pb.length) console.log("   " + appareil + " : " + r.pb.join(", "));
+    verifier(`téléphone à l'horizontale (${appareil}) : commandes visibles, rien ne se chevauche`, r.paysage && r.tactile && r.pb.length === 0);
+    await ctx.close();
+  }
+
   if (erreurs.length) console.log("Erreurs JavaScript :\n  " + erreurs.join("\n  "));
   verifier("aucune erreur JavaScript", erreurs.length === 0);
   await navigateur.close();

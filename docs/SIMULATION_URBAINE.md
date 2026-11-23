@@ -173,7 +173,7 @@ Les scénarios sont dans `tests/simulation.test.js`. Chacun vérifie aussi qu'**
 | **K** — Zone de Kalamu | Ligne réelle 11, aucun feu cartographié (tous simulés), 8 min à 17 h sans chevauchement, plus de 250 véhicules et circulation fluide sur les axes | ✅ |
 | **I** — Zone de la Gombe | Les 3 lignes réelles sont créées (dont la 06B en boucle), au moins un carrefour à feux réel, 12 min à 8 h sans chevauchement, chaque bus a avancé pendant les 5 dernières minutes, plus de 250 véhicules et vitesse sur les axes supérieure à 11 km/h | ✅ |
 
-**Scénario E (navigateur).** Test `tests/e2e_navigateur.cjs`, avec Chromium et Playwright (rendu logiciel). **27 vérifications sur 27 réussies.**
+**Scénario E (navigateur).** Test `tests/e2e_navigateur.cjs`, avec Chromium et Playwright (rendu logiciel). **29 vérifications sur 29 réussies.**
 - Carte sans erreur, tuiles chargées, circulation et piétons affichés autour du joueur.
 - Marche et accroupi.
 - Conduite : monter, avancer, freiner, descendre.
@@ -184,6 +184,7 @@ Les scénarios sont dans `tests/simulation.test.js`. Chacun vérifie aussi qu'**
 - Gombe : zone chargée, lignes réelles 02, 06B et 11, circulation affichée, le joueur marche, sauvegarde séparée de celle de Limete.
 - Lingwala / Kasa-Vubu : stade, palais et hôpital construits ; circulation affichée ; le mur du stade arrête le joueur.
 - Kalamu : zone chargée avec la ligne réelle 11 ; circulation affichée.
+- Téléphone tenu à l'horizontale (Pixel 7 et iPhone 13 simulés) : commandes tactiles visibles, aucun élément ne se chevauche ni ne sort de l'écran.
 - Changement de zone depuis le jeu (retour à Limete).
 
 ### Performances mesurées (machine de test, simulation seule)

@@ -189,6 +189,16 @@ Pour le prototype, le coût est de **0 €**.
 
 Le site est republié automatiquement (`.github/workflows/publier-site.yml`) à chaque envoi qui modifie `web/kinshasa/`.
 
+**Jouer sur téléphone, à l'horizontale (conseillé).**
+- Le jeu s'adapte aux deux sens. À l'horizontale :
+  - le joystick est en bas à gauche ;
+  - les boutons sont sur 2 rangées en bas à droite ;
+  - la barre du haut n'affiche que des icônes.
+- Le bouton **⛶ écran** passe en plein écran et verrouille l'orientation horizontale (Android : Chrome, Samsung Internet).
+- Sur iPhone, Safari ne permet pas le plein écran d'une page. Le jeu conseille donc de l'ajouter à l'écran d'accueil (Partager → « Sur l'écran d'accueil »).
+- Installé ainsi, le jeu s'ouvre sans barre d'adresse, grâce au fichier `jeu/manifest.webmanifest` : plein écran, orientation horizontale.
+- Tenu verticalement, une bannière propose de tourner le téléphone. On peut la fermer : le jeu reste jouable verticalement.
+
 Le 23/11/2026, le test navigateur complet a été passé **sur le site public** : 27 vérifications sur 27. Un essai sur téléphone simulé a aussi été fait : jeu chargé en 8 s, qualité basse choisie automatiquement.
 
 ```

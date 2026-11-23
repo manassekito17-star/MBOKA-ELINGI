@@ -45,8 +45,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0c0d10; col
 #tactile button.actif { background: var(--accent); color: #111; }
 @media (max-width: 700px) {
   /* téléphone : message et circulation sous les boutons du haut, loin des commandes tactiles du bas */
-  #message { max-width: calc(100vw - 24px); top: 226px; bottom: auto; font-size: 13px; }
-  #hud-vitesse { bottom: auto; top: 100px; min-width: 120px; }
+  #message { max-width: calc(100vw - 24px); top: 300px; bottom: auto; font-size: 13px; }
+  #hud-vitesse { bottom: auto; top: 192px; right: 12px; min-width: 110px; }
   #vitesse { font-size: 28px; }
 }
 
@@ -71,6 +71,40 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0c0d10; col
 .panneau th, .panneau td { text-align: left; padding: 5px 6px; border-bottom: 1px solid #333; }
 .panneau .reel { color: #7ee07e; } .panneau .simule { color: #f0b35a; }
 .panneau .actions { margin-top: 12px; text-align: right; }
-@media (max-width: 700px) { #hud-trafic { top: 192px; bottom: auto; font-size: 11px; } }
+@media (max-width: 700px) { #hud-trafic { top: 192px; bottom: auto; font-size: 11px; max-width: calc(100vw - 170px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
 .panneau .zones { display: grid; gap: 8px; }
 .panneau .zones button { text-align: left; line-height: 1.35; }
+
+/* ---------------------------------------------------------------------------------
+   Téléphone tenu à l'HORIZONTALE (paysage, écran bas) : tout le haut tient sur une
+   ligne, le joystick en bas à gauche, les boutons en 2 rangées en bas à droite.
+   --------------------------------------------------------------------------------- */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 560px) {
+  #hud { top: 6px; right: 8px; flex-direction: row; align-items: center; gap: 6px; flex-wrap: nowrap; }
+  #hud .bloc { padding: 4px 8px; font-size: 12px; gap: 8px; border-radius: 8px; }
+  #hud .lien { font-size: 14px; }
+  #hud .libelle { display: none; }      /* boutons du haut : icônes seules */
+  .boutons-hud { gap: 6px; }
+  #hud-trafic { top: 6px; bottom: auto; left: 8px; font-size: 11px; padding: 4px 8px; max-width: calc(100vw - 400px);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #message { top: 44px; bottom: auto; max-width: min(560px, 62vw); font-size: 12px; padding: 6px 10px; }
+  #hud-vitesse { top: auto; bottom: 132px; right: 12px; min-width: 110px; padding: 6px 10px; }
+  #hud-vitesse #vitesse { font-size: 26px; }
+  #lieu { bottom: 12px; font-size: 12px; padding: 5px 10px; max-width: 34vw; }
+  #hud-pos { display: none; }
+  #tactile .joy { left: 18px; bottom: 16px; width: 112px; height: 112px; }
+  #tactile .joy i { left: 33px; top: 33px; width: 46px; height: 46px; }
+  #tactile .boutons { right: 10px; bottom: 10px; grid-template-columns: repeat(5, 52px); gap: 6px; }
+  #tactile button { width: 52px; height: 52px; font-size: 16px; }
+  .panneau, #aide { max-height: 90vh; padding: 10px 14px; }
+}
+
+/* Téléphone tenu verticalement : proposition (non obligatoire) de passer à l'horizontale. */
+/* (au-dessus du joystick, à gauche des boutons tactiles) */
+#tourner { position: fixed; left: 12px; bottom: 176px; width: calc(100vw - 236px); z-index: 8; display: flex; flex-direction: column;
+  gap: 8px; align-items: stretch; background: rgba(15, 16, 19, 0.88); border: 1px solid rgba(242, 178, 51, 0.6);
+  border-radius: 12px; padding: 8px 12px; font-size: 13px; }
+#tourner button { background: var(--accent); color: #111; border: 0; border-radius: 8px; padding: 7px 10px; font: inherit; font-weight: 700; }
+#tourner .fermer { background: transparent; color: var(--texte); font-weight: 400; padding: 4px 8px; }
+#tourner .actions-tourner { display: flex; justify-content: space-between; gap: 6px; }
+@media (orientation: landscape) { #tourner { display: none; } }

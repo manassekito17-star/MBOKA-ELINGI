@@ -75,3 +75,13 @@ html, body { margin: 0; height: 100%; background: var(--fond); color: var(--text
   #stats { display: none; }
   #legende { bottom: auto; top: 74px; right: 76px; max-width: 200px; font-size: 12px; }
 }
+
+/* Téléphone à l'horizontale (écran bas) : outils sur une ligne en haut à droite. */
+@media (orientation: landscape) and (max-height: 560px) {
+  #outils { top: 64px; bottom: auto; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; max-width: 62vw; gap: 6px; }
+  #outils button { padding: 6px 9px; font-size: 13px; }
+  #filtres { top: 64px; }
+  #filtres-liste { max-height: 55vh; }
+  #legende { top: 112px; bottom: auto; }
+  #stats { display: none; }
+}
