@@ -27,6 +27,7 @@ import { GPS } from "./gps.js";
 import { Missions } from "./missions.js";
 import { appliquerTactile, editerTactile } from "./tactile.js";
 import { nomTouche } from "./controles.js";
+import { chargerRegistre, BatimentsRemarquables, aplanirRelief } from "./batiments.js";
 
 const params = new URLSearchParams(location.search);
 const mobile = matchMedia("(pointer: coarse)").matches;
@@ -102,7 +103,16 @@ async function demarrer() {
   const materiaux = params.get("rendu") === "simple" ? null : new Materiaux(renderer, QUALITE);
   if (materiaux) await materiaux.charger();
   const monde = new Monde(scene, physique, `zones/${ZONE}/`, QUALITE, materiaux);
+  // Bâtiments remarquables (modèles individuels) : registre, terrassement du relief sous leurs sites,
+  // emprises retirées des tuiles génériques.
+  const registre = await chargerRegistre();
+  let remarquables = null;
+  monde.preparerRelief = (man, relief) => {
+    remarquables = new BatimentsRemarquables(registre, ZONE, man);
+    aplanirRelief(relief, remarquables.aplanissements());
+  };
   const manifest = await monde.charger();
+  monde.exclusions = remarquables.exclusions();
   const transports = await (await fetch(`zones/${ZONE}/transports.json`)).json().catch(() => null);
   const lieuxZone = await (await fetch(`zones/${ZONE}/lieux.json`)).json().catch(() => []);
   const eauZone = await (await fetch(`zones/${ZONE}/eau.json`)).json().catch(() => []);
@@ -116,7 +126,10 @@ async function demarrer() {
   const audio = new Audio();
   const ctl = new Controles(renderer.domElement);
   if (CONFIG.monument === "echangeur") tourEchangeur(scene, physique, monde.hauteur(0, 0));
-  const monuments = CONFIG.monument === "centre" ? monumentsCentre(scene, physique, monde, manifest.monuments) : {};
+  const modeles = new Set(remarquables.liste.filter((b) => b.modele).map((b) => b.id));
+  const monuments = CONFIG.monument === "centre" ? monumentsCentre(scene, physique, monde, manifest.monuments, modeles) : {};
+  progression("Bâtiments remarquables…", 0.35);
+  await remarquables.construire(scene, physique, monde, QUALITE);
 
   // --- Sauvegarde et point de départ.
   const sauv = params.has("nouveau") ? null : Sauvegarde.charger(ZONE);
@@ -127,14 +140,18 @@ async function demarrer() {
   audio.regler(reglages.volume, reglages.ambiance);
   if (reglages.ombres === false) env.soleil.castShadow = false;
   let depart = { ...CONFIG.depart };
+  const lieuDemande = remarquables.liste.find((b) => b.id === params.get("lieu"));   // « Y aller » depuis une fiche
   if (params.has("lat") && params.has("lon")) depart = proj.versLocal(+params.get("lon"), +params.get("lat"));
+  else if (lieuDemande) depart = { ...lieuDemande.entreeZone };
   else if (sauv) depart = sauv.joueur;
   const limX = (manifest.demi_x ?? manifest.demi) - 20, limZ = (manifest.demi_z ?? manifest.demi) - 20;
   depart.x = Math.max(-limX, Math.min(limX, depart.x));
   depart.z = Math.max(-limZ, Math.min(limZ, depart.z));
   const surRoute = pointRoute(monde.reseau, depart.x, depart.z, ["trunk", "primary", "secondary", "tertiary", "residential", "unclassified"]);
   const trottoir = surRoute.largeur / 2 + 2.2;
-  if (!sauv || params.has("lat")) depart = { x: surRoute.x + surRoute.nx * trottoir, z: surRoute.z + surRoute.nz * trottoir };
+  // « Y aller » : on part de l'entrée du bâtiment ; si aucune rue publique n'est à moins de 40 m (esplanade), on y reste.
+  const routeLoin = lieuDemande && Math.hypot(surRoute.x - depart.x, surRoute.z - depart.z) > 40;
+  if ((!sauv || params.has("lat") || lieuDemande) && !routeLoin) depart = { x: surRoute.x + surRoute.nx * trottoir, z: surRoute.z + surRoute.nz * trottoir };
 
   // --- Simulation urbaine (circulation, bus, minibus, motos-taxis, piétons).
   progression("Simulation de la circulation…", 0.4);
@@ -157,6 +174,8 @@ async function demarrer() {
   physique.pas(1 / 60);
   const yDepart = (physique.solSous(depart.x, 300, depart.z) ?? monde.hauteur(depart.x, depart.z)) + 0.1;
   const joueur = new Joueur(physique, scene, depart.x, yDepart, depart.z, chargerApparence());
+  // « Y aller » : on arrive face au bâtiment demandé.
+  if (lieuDemande) { const bx = remarquables.boite(lieuDemande); ctl.lacet = Math.atan2(-(bx.x - depart.x), -(bx.z - depart.z)); }
 
   // --- Véhicules du joueur (stationnés le long de la rue, ou restaurés).
   const flotte = [];
@@ -280,6 +299,7 @@ async function demarrer() {
   if (sauv) Object.assign(missions.stats, sauv.missions);
   const gps = new GPS(sim.R);
   const carte = new Carte(monde, sim, lieuxZone, eauZone);
+  carte.remarquables = remarquables.liste;
   const hopitaux = lieuxZone.filter((l) => categorie(l[3]) === "hopital");
   const remorquages = [];          // dépanneuse : { v, t (s restantes) }
   let clientPnj = null;            // client ou malade d'une mission (personnage visible)
@@ -350,7 +370,22 @@ async function demarrer() {
     if (etat.mode === "pied") {
       for (const a of sim.arrets.values()) if (Math.hypot(a.x - p.x, a.z - p.z) < 25) { A.push({ texte: `Horaires de l'arrêt « ${a.nom} »`, faire: () => menu.ouvrir("transports") }); break; }
     }
+    // Bâtiment remarquable tout proche : fiche et vue du bâtiment.
+    const rq = remarquables.plusProche(p.x, p.z, 30);
+    if (rq && etat.mode !== "passager") {
+      A.push({ texte: `Fiche : ${rq.b.nom_courant}`, faire: () => menu.ouvrir("lieux", rq.b.id) });
+      A.push({ texte: `Regarder le bâtiment (${rq.b.nom_courant})`, faire: () => regarderBatiment(rq.b) });
+    }
     return A.slice(0, 5);
+  }
+
+  /** Vue cinématique : la caméra tourne autour du bâtiment ; un mouvement rend la main. */
+  let cinematique = null;
+  function regarderBatiment(b) {
+    const bx = remarquables.boite(b);
+    const p = positionJoueur();
+    cinematique = { b, bx, t: 0, duree: 14, y: monde.hauteur(bx.x, bx.z), a0: Math.atan2(p.z - bx.z, p.x - bx.x) };
+    message(`${b.nom_courant} — bougez pour reprendre la main.`, 4, "info");
   }
 
   function interagir() {
@@ -477,6 +512,15 @@ async function demarrer() {
   }
 
   function placerCamera(dt, ax) {
+    if (cinematique) {
+      const c = cinematique;
+      c.t += dt;
+      const r = c.bx.r * 1.15 + 45, a = c.a0 + c.t * 0.18;
+      camera.position.set(c.bx.x + Math.cos(a) * r, c.y + 18 + r * 0.22, c.bx.z + Math.sin(a) * r);
+      camera.lookAt(c.bx.x, c.y + 8, c.bx.z);
+      if (c.t > c.duree || Math.hypot(ax.x, ax.y) > 0.15) cinematique = null;
+      return;
+    }
     tableau.visible = false;
     joueur.objet.visible = true;
     if (etat.mode !== "pied") {
@@ -585,6 +629,13 @@ async function demarrer() {
     appliquerAudio: () => audio.regler(reglages.volume, reglages.ambiance),
     appliquerTactile: () => appliquerTactile(reglages),
     editerTactile: () => editerTactile(ctl, reglages, enregistrerReglages, (t, o) => hud.notifier(t, o)),
+    remarquables, registre,
+    regarderBatiment: (b) => { menu.fermer(); regarderBatiment(b); },
+    allerVers: (b) => {
+      if (b.zone === ZONE) { const r = remarquables.liste.find((x) => x.id === b.id); gps.definir(r.entreeZone.x, r.entreeZone.z, b.nom_courant); hud.notifier(`GPS : ${b.nom_courant}`, { type: "info" }); return; }
+      sauvegarder(true);
+      location.href = `?zone=${encodeURIComponent(b.zone)}&lieu=${encodeURIComponent(b.id)}`;
+    },
     lienCarte: () => { const p = positionJoueur(), g = proj.versGeo(p.x, p.z); return `../index.html#18/${g.lat.toFixed(5)}/${g.lon.toFixed(5)}/0/60`; },
   });
   ctl.enPause = () => etat.pause;
@@ -613,7 +664,8 @@ async function demarrer() {
   addEventListener("keydown", unGeste);
 
   window.__jeu = { etat, joueur, flotte, env, monde, camera, sim, rendu, entrerSortir, sauvegarder, prendreTransport, interagir, monuments, ctl, renderer, scene,
-    hud, menu, gps, missions, carte, reglages, actionsDisponibles, evacuer, actionVehicule, remorquages };
+    hud, menu, gps, missions, carte, reglages, actionsDisponibles, evacuer, actionVehicule, remorquages,
+    remarquables, regarderBatiment, cinematique: () => cinematique };
 
   function boucle() {
     requestAnimationFrame(boucle);
@@ -798,6 +850,8 @@ async function demarrer() {
       hud.etat({ sante: joueur.sante, endurance: joueur.endurance, essouffle: joueur.essouffle, argent: etat.argent, heure: env.heureTexte(), meteo: METEOS[env.meteo],
         rue: carte.rueProche(pj.x, pj.z), zone: CONFIG.court, trafic: `Trafic ${NIVEAUX[sim.niveau]} (simulé) · ${ips} i/s` });
       hud.gps(gps);
+      const annonce = remarquables.approche(pj.x, pj.z);
+      if (annonce) hud.lieu(annonce);
       hud.mission(missions.active, missions.etapeCourante());
       const v = etat.vehicule;
       if (v) {

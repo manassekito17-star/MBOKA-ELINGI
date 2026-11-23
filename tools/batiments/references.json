@@ -1,0 +1,90 @@
+{
+  "note": "Références photographiques des bâtiments remarquables. Seules des photos sous licence libre (Wikimedia Commons) sont copiées dans le dépôt, avec attribution. Les autres sources sont citées par lien. Recherche du 23/11/2026.",
+  "photos": [
+    {
+      "id": "cinquantenaire_ouest_2025",
+      "batiment": "cinquantenaire",
+      "fichier": "assets/batiments/references/cinquantenaire_tite_koya_ccbysa4.jpg",
+      "page": "https://commons.wikimedia.org/wiki/File:H%C3%94PITAL_DU_CINQUANTENAIRE.jpg",
+      "auteur": "Tite koya",
+      "licence": "CC BY-SA 4.0",
+      "date": "2025-11-12",
+      "position_appareil": [-4.342322, 15.294408],
+      "montre": "Vue depuis l'avenue de la Libération (ouest), vers l'est : grand bloc blanc à hublots ovales (≈ 8 niveaux), tour d'escalier, blocs blancs à fenêtres rectangulaires, aile basse gris anthracite au premier plan avec bandeau à grands disques, portique d'entrée avec lettres dorées « HÔPITAL DU CINQUANTENAIRE », auvents voûtés à gauche, grille noire à piliers surmontés de globes, pelouse, palmier."
+    },
+    {
+      "id": "stade_exterieur_2025",
+      "batiment": "stade_martyrs",
+      "fichier": "assets/batiments/references/stade_sdm_fiston_bamela_cc0.jpg",
+      "page": "https://commons.wikimedia.org/wiki/File:SDM_Kinshasa.jpg",
+      "auteur": "Fiston bamela",
+      "licence": "CC0 1.0",
+      "date": "2025-12-02",
+      "position_appareil": null,
+      "montre": "Extérieur (photo noir et blanc, depuis une voiture) : cuvette sans façade fermée ; dessous incliné de la tribune haute porté par des poteaux obliques en béton ; poutre annulaire à mi-hauteur ; couronne supérieure de panneaux verticaux nervurés ; palissade en tôle et lampadaires au premier plan."
+    },
+    {
+      "id": "stade_tribunes_2022",
+      "batiment": "stade_martyrs",
+      "fichier": "assets/batiments/references/stade_leopard_mikebrown7_ccbysa4.jpg",
+      "page": "https://commons.wikimedia.org/wiki/File:Leopard_RDC,_Kinshasa.jpg",
+      "auteur": "Mikebrown7",
+      "licence": "CC BY-SA 4.0",
+      "date": "2022-03-25",
+      "position_appareil": null,
+      "montre": "Intérieur, tribune basse : sièges bleus et jaunes ; béton peint ocre-jaune ; tribune haute en surplomb ; galerie couverte en haut de la tribune d'en face, à poteaux et rive de toiture en dents de scie ocre ; écran géant."
+    },
+    {
+      "id": "stade_tribune_principale_2017",
+      "batiment": "stade_martyrs",
+      "fichier": "assets/batiments/references/stade_protest_monusco_ccbysa2.jpg",
+      "page": "https://commons.wikimedia.org/wiki/File:Stade_des_martyrs_Protest.jpg",
+      "auteur": "MONUSCO Photos",
+      "licence": "CC BY-SA 2.0",
+      "date": "2017-06-10",
+      "position_appareil": null,
+      "montre": "Intérieur, de nuit : deux niveaux de tribunes, bandeau entre les niveaux avec banderoles, poteaux en haut de la tribune, garde-corps blanc en bord de pelouse, pelouse."
+    },
+    {
+      "id": "stade_petit_terrain_2024",
+      "batiment": "stade_martyrs",
+      "fichier": "assets/batiments/references/stade_petit_terrain_masandi_ccbysa4.jpg",
+      "page": "https://commons.wikimedia.org/wiki/File:Petit_terrain_de_stade_de_martyrs.jpg",
+      "auteur": "Alphonse Masandi",
+      "licence": "CC BY-SA 4.0",
+      "date": "2024-10-22",
+      "position_appareil": null,
+      "montre": "Terrain annexe d'échauffement : piste d'athlétisme rouge, terrain en herbe, pylônes d'éclairage en treillis, mur d'enceinte crème."
+    },
+    {
+      "id": "fikin_monument_2025",
+      "batiment": "fikin",
+      "fichier": "assets/batiments/references/fikin_monument_fiston_bamela_cc0.jpg",
+      "page": "https://commons.wikimedia.org/wiki/File:Monument_de_la_Foire_internationale_de_Kinshasa_(FIKIN),_R%C3%A9publique_d%C3%A9mocratique_du_Congo.jpg",
+      "auteur": "Fiston bamela",
+      "licence": "CC0 1.0",
+      "date": "2025-12-02",
+      "position_appareil": null,
+      "montre": "Statue blanche monumentale d'un homme musclé (main droite levée, objet rond à la main gauche, pagne) sur un socle sombre ; derrière : long hangar à toit de tôle avec banderole « Bienvenue à la 46e édition FIKIN », drapeaux de la RDC, grille noire, parking en terre ; au loin : conteneurs et silos."
+    }
+  ],
+  "sources_textuelles": [
+    {"batiment": "cinquantenaire", "url": "https://fr.wikipedia.org/wiki/H%C3%B4pital_du_Cinquantenaire", "apport": "Inauguration le 22 mars 2014 ; travaux commencés en 1954 ; 515 lits ; géré par Padiyath HealthCare (jusqu'en 2024 selon l'ACP)."},
+    {"batiment": "cinquantenaire", "url": "https://acp.cd/science-sante-environnement/les-innovations-sanitaires-du-centre-hospitalier-du-cinquantenaire-presentees-aux-journalistes/", "apport": "Devenu « Centre hospitalier universitaire du Cinquantenaire (CHU-50) » (août 2026)."},
+    {"batiment": "cinquantenaire", "url": "https://medialab.sciencespo.fr/productions/2022-the-brand-new-ruins-of-public-health-a-tale-of-two-buildings-kinshasa-drc", "apport": "Ancien « Hôpital cardiologique », à Kasa-Vubu ; ruine dans les années 1990, renaissance dans les années 2010."},
+    {"batiment": "cinquantenaire", "url": "https://www.openstreetmap.org/way/102422512", "apport": "Contour du terrain, adresse avenue de la Libération, Kasa-Vubu."},
+    {"batiment": "stade_martyrs", "url": "https://fr.wikipedia.org/wiki/Stade_des_Martyrs", "apport": "Construit avec la coopération chinoise (1988-1993), inauguré en septembre 1994, environ 80 000 places."},
+    {"batiment": "stade_martyrs", "url": "https://www.openstreetmap.org/way/4402561", "apport": "Contour réel ; nom officiel « Stade des Martyrs de la Pentecôte »."},
+    {"batiment": "fikin", "url": "https://fr.wikipedia.org/wiki/Foire_internationale_de_Kinshasa", "apport": "Foire ouverte le 30 juin 1969, à Limete."},
+    {"batiment": "fikin", "url": "https://kosubaawate.blogspot.com/2015/03/kinshasa-1969-fikin-puts-congo-on-new.html", "apport": "Site de 18 hectares avec pavillons et parc d'attractions (1969)."},
+    {"batiment": "fikin", "url": "https://www.mediacongo.net/article-actualite-62122_en_marge_de_9e_jeux_de_la_francophonie_prevus_a_kinshasa_1_34_millions_usd_decaisses_pour_rehabiliter_neuf_pavillons_de_la_fikin.html", "apport": "Réhabilitation de neuf pavillons (2020)."},
+    {"batiment": "fikin", "url": "https://www.openstreetmap.org/way/4708901", "apport": "Contour réel du site (Masiala, Limete)."},
+    {"batiment": "kintambo_hgr", "url": "https://www.openstreetmap.org/way/404843994", "apport": "Nom exact « Hôpital Général de Référence de Kintambo », contour du site et des pavillons."},
+    {"batiment": "kintambo_hgr", "url": "https://www.mcsprogram.org/wp-content/uploads/dlm_uploads/2019/06/DRC-Model-Training-Center-Case-Study-FINAL_French.pdf", "apport": "Appelé « Hôpital général de Kintambo » ; maternité, pédiatrie et planification familiale dans trois bâtiments distincts."}
+  ],
+  "absences": [
+    "Aucune photo libre de l'Hôpital Général de Référence de Kintambo trouvée (Wikimedia Commons : 0 résultat ; recherche web : aucune photo exploitable).",
+    "Aucune photo libre des pavillons d'exposition de la FIKIN : seule l'entrée (monument et hangar) est documentée.",
+    "Aucune vue aérienne libre exploitable : les images Google Earth / Maps / Bing ne peuvent pas être extraites (conditions d'utilisation)."
+  ]
+}

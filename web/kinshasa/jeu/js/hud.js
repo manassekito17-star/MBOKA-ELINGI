@@ -75,6 +75,18 @@ export class HUD {
     setTimeout(() => n.remove(), duree * 1000 + 450);
   }
 
+  /** Bâtiment remarquable : son nom s'affiche discrètement à l'approche (fil des notifications). */
+  lieu(b) {
+    const fil = $("notifs");
+    const n = document.createElement("div");
+    n.className = "notif lieu";
+    n.innerHTML = `<b>${esc(b.nom_courant.toUpperCase())}</b><span>${esc(b.categorie_libelle)}</span><small>${esc(b.commune)}, Kinshasa, RDC</small>`;
+    fil.prepend(n);
+    while (fil.children.length > 4) fil.lastChild.remove();
+    setTimeout(() => n.classList.add("sortie"), 7000);
+    setTimeout(() => n.remove(), 7450);
+  }
+
   /** Bandeau GPS : prochaine manœuvre réelle et distance restante. */
   gps(g) {
     const el = $("gps-bandeau");

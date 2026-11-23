@@ -73,7 +73,7 @@ const assert = require("node:assert/strict");
   await attendre(1500);
   const t1 = await J(() => [window.__jeu.sim.t, window.__jeu.env.heure]);
   ok("pause : menu ouvert, circulation et heure arrêtées", t0[0] === true && t1[0] === t0[1] && t1[1] === t0[2]);
-  for (const o of ["carte", "personnage", "vehicules", "missions", "transports", "zones", "parametres", "sauvegarde", "quitter"]) {
+  for (const o of ["carte", "lieux", "personnage", "vehicules", "missions", "transports", "zones", "parametres", "sauvegarde", "quitter"]) {
     await page.click(`[data-onglet="${o}"]`); await attendre(400);
     const n = await J(() => document.getElementById("menu-contenu").textContent.trim().length);
     ok(`menu : onglet « ${o} » affiché`, n > 20);

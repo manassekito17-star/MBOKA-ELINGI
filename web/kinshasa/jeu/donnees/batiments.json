@@ -1,0 +1,967 @@
+{
+ "version": 2,
+ "genere": "2026-11-23",
+ "note": "Registre des bâtiments remarquables de Kinshasa 3D (généré par tools/batiments/construire_registre.py). Repère des emprises, entrées et vues : mètres autour du point GPS (x = est, y = haut, z = sud).",
+ "statuts": {
+  "photo": "vu sur une photo libre",
+  "osm": "OpenStreetMap",
+  "satellite": "empreinte satellite",
+  "estime": "valeur estimée",
+  "deduit": "hypothèse non vérifiée",
+  "absent": "non reproduit"
+ },
+ "photos": [
+  {
+   "id": "cinquantenaire_ouest_2025",
+   "batiment": "cinquantenaire",
+   "fichier": "assets/batiments/references/cinquantenaire_tite_koya_ccbysa4.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:H%C3%94PITAL_DU_CINQUANTENAIRE.jpg",
+   "auteur": "Tite koya",
+   "licence": "CC BY-SA 4.0",
+   "date": "2025-11-12",
+   "position_appareil": [
+    -4.342322,
+    15.294408
+   ],
+   "montre": "Vue depuis l'avenue de la Libération (ouest), vers l'est : grand bloc blanc à hublots ovales (≈ 8 niveaux), tour d'escalier, blocs blancs à fenêtres rectangulaires, aile basse gris anthracite au premier plan avec bandeau à grands disques, portique d'entrée avec lettres dorées « HÔPITAL DU CINQUANTENAIRE », auvents voûtés à gauche, grille noire à piliers surmontés de globes, pelouse, palmier."
+  },
+  {
+   "id": "stade_exterieur_2025",
+   "batiment": "stade_martyrs",
+   "fichier": "assets/batiments/references/stade_sdm_fiston_bamela_cc0.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:SDM_Kinshasa.jpg",
+   "auteur": "Fiston bamela",
+   "licence": "CC0 1.0",
+   "date": "2025-12-02",
+   "position_appareil": null,
+   "montre": "Extérieur (photo noir et blanc, depuis une voiture) : cuvette sans façade fermée ; dessous incliné de la tribune haute porté par des poteaux obliques en béton ; poutre annulaire à mi-hauteur ; couronne supérieure de panneaux verticaux nervurés ; palissade en tôle et lampadaires au premier plan."
+  },
+  {
+   "id": "stade_tribunes_2022",
+   "batiment": "stade_martyrs",
+   "fichier": "assets/batiments/references/stade_leopard_mikebrown7_ccbysa4.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Leopard_RDC,_Kinshasa.jpg",
+   "auteur": "Mikebrown7",
+   "licence": "CC BY-SA 4.0",
+   "date": "2022-03-25",
+   "position_appareil": null,
+   "montre": "Intérieur, tribune basse : sièges bleus et jaunes ; béton peint ocre-jaune ; tribune haute en surplomb ; galerie couverte en haut de la tribune d'en face, à poteaux et rive de toiture en dents de scie ocre ; écran géant."
+  },
+  {
+   "id": "stade_tribune_principale_2017",
+   "batiment": "stade_martyrs",
+   "fichier": "assets/batiments/references/stade_protest_monusco_ccbysa2.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Stade_des_martyrs_Protest.jpg",
+   "auteur": "MONUSCO Photos",
+   "licence": "CC BY-SA 2.0",
+   "date": "2017-06-10",
+   "position_appareil": null,
+   "montre": "Intérieur, de nuit : deux niveaux de tribunes, bandeau entre les niveaux avec banderoles, poteaux en haut de la tribune, garde-corps blanc en bord de pelouse, pelouse."
+  },
+  {
+   "id": "stade_petit_terrain_2024",
+   "batiment": "stade_martyrs",
+   "fichier": "assets/batiments/references/stade_petit_terrain_masandi_ccbysa4.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Petit_terrain_de_stade_de_martyrs.jpg",
+   "auteur": "Alphonse Masandi",
+   "licence": "CC BY-SA 4.0",
+   "date": "2024-10-22",
+   "position_appareil": null,
+   "montre": "Terrain annexe d'échauffement : piste d'athlétisme rouge, terrain en herbe, pylônes d'éclairage en treillis, mur d'enceinte crème."
+  },
+  {
+   "id": "fikin_monument_2025",
+   "batiment": "fikin",
+   "fichier": "assets/batiments/references/fikin_monument_fiston_bamela_cc0.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Monument_de_la_Foire_internationale_de_Kinshasa_(FIKIN),_R%C3%A9publique_d%C3%A9mocratique_du_Congo.jpg",
+   "auteur": "Fiston bamela",
+   "licence": "CC0 1.0",
+   "date": "2025-12-02",
+   "position_appareil": null,
+   "montre": "Statue blanche monumentale d'un homme musclé (main droite levée, objet rond à la main gauche, pagne) sur un socle sombre ; derrière : long hangar à toit de tôle avec banderole « Bienvenue à la 46e édition FIKIN », drapeaux de la RDC, grille noire, parking en terre ; au loin : conteneurs et silos."
+  }
+ ],
+ "batiments": [
+  {
+   "id": "cinquantenaire",
+   "version": 2,
+   "nom_officiel": "Hôpital du Cinquantenaire",
+   "nom_courant": "Hôpital du Cinquantenaire",
+   "autres_noms": [
+    "CHU du Cinquantenaire (CHU-50, depuis 2026)",
+    "ancien Hôpital cardiologique"
+   ],
+   "categorie": "hopital",
+   "categorie_libelle": "Établissement hospitalier",
+   "priorite": 2,
+   "adresse": "Avenue de la Libération (ex-boulevard du 24 Novembre)",
+   "commune": "Kasa-Vubu",
+   "zone": "centre",
+   "gps": {
+    "lat": -4.34169,
+    "lon": 15.29633
+   },
+   "modele": "assets/batiments/cinquantenaire.glb",
+   "lod": [
+    180,
+    600
+   ],
+   "emprise": [
+    [
+     [
+      107.44,
+      190.6
+     ],
+     [
+      -206.91,
+      96.51
+     ],
+     [
+      -114.01,
+      -142.8
+     ],
+     [
+      201.52,
+      -95.16
+     ]
+    ]
+   ],
+   "entree": [
+    -156.8,
+    -16.0
+   ],
+   "description": "Grand hôpital public (515 lits selon Wikipédia), dont la construction a commencé en 1954 et qui a été inauguré le 22 mars 2014. Grand bloc blanc à hublots ovales, blocs blancs à fenêtres, longue aile basse gris anthracite couronnée d'un bandeau à grands disques, portique d'entrée aux lettres dorées.",
+   "references": [
+    "cinquantenaire_ouest_2025"
+   ],
+   "sources": [
+    "https://fr.wikipedia.org/wiki/H%C3%B4pital_du_Cinquantenaire",
+    "https://acp.cd/science-sante-environnement/les-innovations-sanitaires-du-centre-hospitalier-du-cinquantenaire-presentees-aux-journalistes/",
+    "https://medialab.sciencespo.fr/productions/2022-the-brand-new-ruins-of-public-health-a-tale-of-two-buildings-kinshasa-drc",
+    "https://www.openstreetmap.org/way/102422512"
+   ],
+   "fidelite": {
+    "niveau": "moyenne",
+    "resume": "Façade ouest (côté avenue) reproduite d'après une photo libre de 2025 ; plan d'après les empreintes satellite ; hauteurs estimées ; faces non photographiées déduites.",
+    "elements": [
+     {
+      "element": "Position et contour du terrain",
+      "statut": "osm"
+     },
+     {
+      "element": "Plan des bâtiments (49 empreintes)",
+      "statut": "satellite"
+     },
+     {
+      "element": "Façade ouest du grand bloc : hublots ovales reliés par des barres, reliefs en losange, tour d'escalier",
+      "statut": "photo"
+     },
+     {
+      "element": "Aile basse gris anthracite, fenêtres à cadre blanc, pilastres",
+      "statut": "photo"
+     },
+     {
+      "element": "Bandeau à grands disques et demi-disques",
+      "statut": "photo"
+     },
+     {
+      "element": "Portique d'entrée et lettres dorées « HÔPITAL DU CINQUANTENAIRE »",
+      "statut": "photo"
+     },
+     {
+      "element": "Grille noire à piliers surmontés de globes, pelouse, palmier",
+      "statut": "photo"
+     },
+     {
+      "element": "Auvents voûtés du parking",
+      "statut": "photo"
+     },
+     {
+      "element": "Bloc blanc à fenêtres et mât (sud)",
+      "statut": "photo"
+     },
+     {
+      "element": "Hauteur du grand bloc : 8 niveaux ≈ 27 m",
+      "statut": "estime"
+     },
+     {
+      "element": "Faces nord, est et sud du grand bloc ; bloc nord ; annexes ; ailes nord",
+      "statut": "deduit"
+     },
+     {
+      "element": "Couleurs : gris et blanc (photo de 2025) — les « hublots rouges » d'une version précédente ne sont pas confirmés",
+      "statut": "photo"
+     },
+     {
+      "element": "Intérieurs, enseignes secondaires, parking réel",
+      "statut": "absent"
+     }
+    ]
+   },
+   "date_verification": "2026-11-23",
+   "notes": [
+    "La position GPS enregistrée par le téléphone de la photo semble décalée d'environ 120 m : la vue de comparaison est placée là où la disposition des bâtiments correspond (point de vue perpendiculaire à la grille).",
+    "L'empreinte satellite du grand bloc (saillie de 9,4 m côté ouest) correspond à la tour d'escalier de la photo."
+   ],
+   "vues": {
+    "photo": {
+     "nom": "Comme la photo",
+     "pos": [
+      -241,
+      1.7,
+      -48
+     ],
+     "cible": [
+      -40,
+      11,
+      28
+     ],
+     "fov": 12,
+     "photo": "cinquantenaire_ouest_2025"
+    },
+    "face": {
+     "nom": "Face (avenue)",
+     "pos": [
+      -175,
+      18,
+      26
+     ],
+     "cible": [
+      0,
+      10,
+      30
+     ],
+     "fov": 50
+    },
+    "cote": {
+     "nom": "Côté (nord)",
+     "pos": [
+      -40,
+      35,
+      -230
+     ],
+     "cible": [
+      30,
+      5,
+      40
+     ],
+     "fov": 50
+    },
+    "aerien": {
+     "nom": "Aérien",
+     "pos": [
+      -230,
+      300,
+      280
+     ],
+     "cible": [
+      0,
+      0,
+      20
+     ],
+     "fov": 45
+    }
+   }
+  },
+  {
+   "id": "stade_martyrs",
+   "version": 2,
+   "nom_officiel": "Stade des Martyrs de la Pentecôte",
+   "nom_courant": "Stade des Martyrs",
+   "autres_noms": [
+    "Stade Kamanyola (nom d'origine)"
+   ],
+   "categorie": "stade",
+   "categorie_libelle": "Stade",
+   "priorite": 3,
+   "adresse": "Avenue de la Région, Djalo",
+   "commune": "Lingwala",
+   "zone": "centre",
+   "gps": {
+    "lat": -4.33018,
+    "lon": 15.31036
+   },
+   "modele": "assets/batiments/stade_martyrs.glb",
+   "lod": [
+    260,
+    900
+   ],
+   "emprise": [
+    [
+     [
+      -34.9,
+      -142.0
+     ],
+     [
+      -20.7,
+      -144.4
+     ],
+     [
+      -4.9,
+      -145.2
+     ],
+     [
+      10.0,
+      -144.0
+     ],
+     [
+      24.5,
+      -140.7
+     ],
+     [
+      38.1,
+      -136.5
+     ],
+     [
+      51.3,
+      -129.1
+     ],
+     [
+      64.6,
+      -118.4
+     ],
+     [
+      77.9,
+      -104.7
+     ],
+     [
+      90.0,
+      -88.3
+     ],
+     [
+      100.4,
+      -70.1
+     ],
+     [
+      109.3,
+      -52.2
+     ],
+     [
+      116.2,
+      -31.1
+     ],
+     [
+      120.5,
+      -9.4
+     ],
+     [
+      122.0,
+      11.4
+     ],
+     [
+      121.3,
+      33.6
+     ],
+     [
+      118.3,
+      54.2
+     ],
+     [
+      111.9,
+      79.4
+     ],
+     [
+      103.6,
+      102.0
+     ],
+     [
+      93.8,
+      119.9
+     ],
+     [
+      80.2,
+      136.2
+     ],
+     [
+      67.0,
+      147.0
+     ],
+     [
+      54.3,
+      154.5
+     ],
+     [
+      40.0,
+      160.3
+     ],
+     [
+      23.2,
+      164.3
+     ],
+     [
+      8.0,
+      166.5
+     ],
+     [
+      -10.4,
+      165.6
+     ],
+     [
+      -29.4,
+      161.6
+     ],
+     [
+      -48.2,
+      153.8
+     ],
+     [
+      -64.6,
+      142.9
+     ],
+     [
+      -79.7,
+      128.6
+     ],
+     [
+      -92.6,
+      110.6
+     ],
+     [
+      -104.2,
+      87.6
+     ],
+     [
+      -113.4,
+      61.8
+     ],
+     [
+      -119.0,
+      36.0
+     ],
+     [
+      -121.1,
+      13.0
+     ],
+     [
+      -119.7,
+      -12.7
+     ],
+     [
+      -117.0,
+      -34.0
+     ],
+     [
+      -112.3,
+      -53.5
+     ],
+     [
+      -106.2,
+      -71.1
+     ],
+     [
+      -97.5,
+      -89.9
+     ],
+     [
+      -94.6,
+      -94.7
+     ],
+     [
+      -87.2,
+      -106.7
+     ],
+     [
+      -75.9,
+      -120.0
+     ],
+     [
+      -63.0,
+      -130.4
+     ],
+     [
+      -50.3,
+      -136.9
+     ]
+    ]
+   ],
+   "entree": [
+    -128.0,
+    20.0
+   ],
+   "description": "Stade national de la RDC, environ 80 000 places, construit avec la coopération chinoise (1988-1993) et inauguré en septembre 1994. Cuvette ovale à deux niveaux, sans façade fermée : de l'extérieur on voit le dessous incliné de la tribune haute, porté par des poteaux obliques.",
+   "references": [
+    "stade_exterieur_2025",
+    "stade_tribunes_2022",
+    "stade_tribune_principale_2017",
+    "stade_petit_terrain_2024"
+   ],
+   "sources": [
+    "https://fr.wikipedia.org/wiki/Stade_des_Martyrs",
+    "https://www.openstreetmap.org/way/4402561",
+    "https://www.openstreetmap.org/way/612365315"
+   ],
+   "fidelite": {
+    "niveau": "moyenne",
+    "resume": "Contour et pelouse réels (OpenStreetMap) ; structure extérieure et tribunes d'après quatre photos libres ; hauteurs, nombre de travées et couleur extérieure estimés.",
+    "elements": [
+     {
+      "element": "Contour (296 × 228 m) et orientation",
+      "statut": "osm"
+     },
+     {
+      "element": "Pelouse synthétique 105 × 68 m",
+      "statut": "osm"
+     },
+     {
+      "element": "Cuvette sans façade fermée, dessous incliné de la tribune haute, poteaux obliques, poutre annulaire",
+      "statut": "photo"
+     },
+     {
+      "element": "Couronne de panneaux verticaux nervurés",
+      "statut": "photo"
+     },
+     {
+      "element": "Deux niveaux de tribunes, bandeau ocre intermédiaire",
+      "statut": "photo"
+     },
+     {
+      "element": "Sièges bleus et jaunes, béton ocre-jaune à l'intérieur",
+      "statut": "photo"
+     },
+     {
+      "element": "Galerie couverte au sommet, rive de toiture en dents de scie",
+      "statut": "photo"
+     },
+     {
+      "element": "Garde-corps blanc en bord de pelouse",
+      "statut": "photo"
+     },
+     {
+      "element": "Piste d'athlétisme de 400 m (8 couloirs, rouge)",
+      "statut": "deduit"
+     },
+     {
+      "element": "Hauteur (≈ 35 m), nombre de travées (96), répartition des couleurs de sièges",
+      "statut": "estime"
+     },
+     {
+      "element": "Couleur extérieure (photo noir et blanc)",
+      "statut": "estime"
+     },
+     {
+      "element": "Emplacement des accès (4)",
+      "statut": "deduit"
+     },
+     {
+      "element": "Écran géant, éclairage, terrain annexe, salle omnisports",
+      "statut": "absent"
+     }
+    ]
+   },
+   "date_verification": "2026-11-23",
+   "vues": {
+    "exterieur": {
+     "nom": "Extérieur (comme la photo)",
+     "pos": [
+      -150,
+      3,
+      -205
+     ],
+     "cible": [
+      0,
+      18,
+      -40
+     ],
+     "fov": 40,
+     "photo": "stade_exterieur_2025"
+    },
+    "tribunes": {
+     "nom": "Tribunes",
+     "pos": [
+      20,
+      4,
+      10
+     ],
+     "cible": [
+      -60,
+      22,
+      -30
+     ],
+     "fov": 70,
+     "photo": "stade_tribunes_2022"
+    },
+    "face": {
+     "nom": "Face",
+     "pos": [
+      -300,
+      40,
+      0
+     ],
+     "cible": [
+      0,
+      12,
+      0
+     ],
+     "fov": 50
+    },
+    "aerien": {
+     "nom": "Aérien",
+     "pos": [
+      -260,
+      300,
+      260
+     ],
+     "cible": [
+      0,
+      0,
+      0
+     ],
+     "fov": 45
+    }
+   }
+  },
+  {
+   "id": "fikin",
+   "version": 2,
+   "nom_officiel": "Foire internationale de Kinshasa",
+   "nom_courant": "FIKIN",
+   "autres_noms": [
+    "Foire internationale du Congo"
+   ],
+   "categorie": "foire",
+   "categorie_libelle": "Parc des expositions",
+   "priorite": 1,
+   "adresse": "Masiala, accès par la route vers la FIKIN",
+   "commune": "Limete",
+   "zone": "limete",
+   "gps": {
+    "lat": -4.37202,
+    "lon": 15.33781
+   },
+   "modele": "assets/batiments/fikin.glb",
+   "lod": [
+    220,
+    750
+   ],
+   "emprise": [
+    [
+     [
+      418.9,
+      -132.21
+     ],
+     [
+      391.93,
+      223.95
+     ],
+     [
+      -422.33,
+      132.63
+     ],
+     [
+      -384.22,
+      -200.81
+     ],
+     [
+      -244.17,
+      -183.67
+     ],
+     [
+      -241.32,
+      -197.95
+     ]
+    ]
+   ],
+   "entree": [
+    285.0,
+    -72.0
+   ],
+   "description": "Parc des expositions ouvert le 30 juin 1969 (environ 18 à 28 ha), pillé en 1991 et 1993, en cours de réhabilitation. À l'entrée est : grande statue blanche sur socle sombre et hangar à banderole.",
+   "references": [
+    "fikin_monument_2025"
+   ],
+   "sources": [
+    "https://fr.wikipedia.org/wiki/Foire_internationale_de_Kinshasa",
+    "https://www.openstreetmap.org/way/4708901",
+    "https://kosubaawate.blogspot.com/2015/03/kinshasa-1969-fikin-puts-congo-on-new.html",
+    "https://www.mediacongo.net/article-actualite-62122_en_marge_de_9e_jeux_de_la_francophonie_prevus_a_kinshasa_1_34_millions_usd_decaisses_pour_rehabiliter_neuf_pavillons_de_la_fikin.html"
+   ],
+   "fidelite": {
+    "niveau": "faible",
+    "resume": "Seule l'entrée (statue, hangar, drapeaux) est documentée par une photo libre ; les pavillons sont placés sur leurs empreintes satellite mais leur apparence n'est pas vérifiée.",
+    "elements": [
+     {
+      "element": "Contour du site, sol en terre",
+      "statut": "osm"
+     },
+     {
+      "element": "Statue monumentale blanche (main levée, objet rond, pagne) sur socle sombre",
+      "statut": "photo"
+     },
+     {
+      "element": "Hangar à toit de tôle, banderole « Bienvenue à la 46e édition FIKIN », grille, drapeaux de la RDC",
+      "statut": "photo"
+     },
+     {
+      "element": "Position de l'entrée (est) : route « Entrée FIKIN » d'OSM et arrière-plan industriel de la photo",
+      "statut": "deduit"
+     },
+     {
+      "element": "Proportions de la statue (≈ 6,5 m + socle 1,8 m)",
+      "statut": "estime"
+     },
+     {
+      "element": "Pavillons : position et forme",
+      "statut": "satellite"
+     },
+     {
+      "element": "Pavillons : murs clairs, toits de tôle (apparence)",
+      "statut": "deduit"
+     },
+     {
+      "element": "14 empreintes du parvis non construites (la photo de 2025 y montre un parking dégagé)",
+      "statut": "deduit"
+     },
+     {
+      "element": "Noms et architecture des pavillons, parc d'attractions, décorations temporaires « 2025 »",
+      "statut": "absent"
+     }
+    ]
+   },
+   "date_verification": "2026-11-23",
+   "vues": {
+    "monument": {
+     "nom": "Monument (comme la photo)",
+     "pos": [
+      245,
+      1.6,
+      -71
+     ],
+     "cible": [
+      309,
+      4.8,
+      -72
+     ],
+     "fov": 20,
+     "photo": "fikin_monument_2025"
+    },
+    "entree": {
+     "nom": "Entrée",
+     "pos": [
+      250,
+      14,
+      -130
+     ],
+     "cible": [
+      350,
+      4,
+      -62
+     ],
+     "fov": 45
+    },
+    "aerien": {
+     "nom": "Aérien",
+     "pos": [
+      -350,
+      420,
+      420
+     ],
+     "cible": [
+      0,
+      0,
+      0
+     ],
+     "fov": 45
+    }
+   }
+  },
+  {
+   "id": "kintambo_hgr",
+   "version": 1,
+   "nom_officiel": "Hôpital Général de Référence de Kintambo",
+   "nom_courant": "Hôpital de Kintambo",
+   "autres_noms": [
+    "Hôpital général de Kintambo",
+    "Maternité de Kintambo (bâtiment voisin)"
+   ],
+   "categorie": "hopital",
+   "categorie_libelle": "Établissement hospitalier",
+   "priorite": 2,
+   "adresse": "Avenue de l'OUA / avenue de l'Hôpital, Lisala",
+   "commune": "Kintambo",
+   "zone": "kintambo",
+   "gps": {
+    "lat": -4.3346,
+    "lon": 15.27099
+   },
+   "modele": "assets/batiments/kintambo_hgr.glb",
+   "lod": [
+    160,
+    480
+   ],
+   "emprise": [
+    [
+     [
+      124.93,
+      176.25
+     ],
+     [
+      107.96,
+      53.29
+     ],
+     [
+      79.97,
+      37.8
+     ],
+     [
+      70.95,
+      31.05
+     ],
+     [
+      57.42,
+      -37.85
+     ],
+     [
+      69.55,
+      -85.46
+     ],
+     [
+      54.78,
+      -127.73
+     ],
+     [
+      -105.82,
+      -144.1
+     ],
+     [
+      -112.37,
+      -133.68
+     ],
+     [
+      -76.04,
+      -30.97
+     ],
+     [
+      -27.21,
+      103.89
+     ],
+     [
+      -20.66,
+      114.33
+     ]
+    ],
+    [
+     [
+      -71.53,
+      107.23
+     ],
+     [
+      -156.99,
+      137.91
+     ],
+     [
+      -140.38,
+      181.7
+     ],
+     [
+      -118.43,
+      242.69
+     ],
+     [
+      -94.37,
+      234.04
+     ],
+     [
+      -74.44,
+      227.36
+     ],
+     [
+      -57.31,
+      221.63
+     ],
+     [
+      -46.68,
+      214.88
+     ],
+     [
+      -40.83,
+      204.33
+     ],
+     [
+      -42.23,
+      193.32
+     ],
+     [
+      -62.87,
+      131.36
+     ]
+    ]
+   ],
+   "entree": [
+    -69.6,
+    9.7
+   ],
+   "description": "Hôpital général de référence de la commune de Kintambo : pavillons parallèles d'un seul niveau (plan réel). La maternité de Kintambo est voisine. « Hôpital de Kintambo » désigne cet établissement ; il ne s'agit pas d'un hôpital pédiatrique distinct (vérifié : rapport MCSP 2019, OpenStreetMap).",
+   "references": [],
+   "sources": [
+    "https://www.openstreetmap.org/way/404843994",
+    "https://www.openstreetmap.org/way/539014983",
+    "https://www.mcsprogram.org/wp-content/uploads/dlm_uploads/2019/06/DRC-Model-Training-Center-Case-Study-FINAL_French.pdf"
+   ],
+   "fidelite": {
+    "niveau": "volumetrie",
+    "resume": "Aucune photo libre trouvée : le plan (51 bâtiments) est réel, l'apparence est une hypothèse neutre. Le modèle n'est PAS considéré comme terminé.",
+    "elements": [
+     {
+      "element": "Nom exact et identité de l'établissement",
+      "statut": "osm"
+     },
+     {
+      "element": "Contours du site et de la maternité",
+      "statut": "osm"
+     },
+     {
+      "element": "Plan des pavillons",
+      "statut": "osm"
+     },
+     {
+      "element": "Un seul niveau (documenté pour la maternité)",
+      "statut": "osm"
+     },
+     {
+      "element": "Hauteur des autres pavillons (1 niveau)",
+      "statut": "estime"
+     },
+     {
+      "element": "Murs clairs, fenêtres, toits de tôle en croupe",
+      "statut": "deduit"
+     },
+     {
+      "element": "Façades, entrées, enseignes, galeries couvertes, couleurs réelles",
+      "statut": "absent"
+     }
+    ]
+   },
+   "date_verification": "2026-11-23",
+   "vues": {
+    "face": {
+     "nom": "Face",
+     "pos": [
+      -150,
+      25,
+      40
+     ],
+     "cible": [
+      0,
+      2,
+      0
+     ],
+     "fov": 50
+    },
+    "aerien": {
+     "nom": "Aérien",
+     "pos": [
+      -180,
+      230,
+      220
+     ],
+     "cible": [
+      0,
+      0,
+      0
+     ],
+     "fov": 45
+    }
+   }
+  }
+ ]
+}

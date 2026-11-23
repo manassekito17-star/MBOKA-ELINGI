@@ -52,6 +52,17 @@ export const ZONES = {
         type: "minibus", depart: "Nord", terminus: "Sud", nbBus: 4 },
     ],
   },
+  kintambo: {
+    nom: "Kintambo — Hôpital général de référence",
+    court: "Kintambo",
+    description: "2 × 2 km : Kintambo, l'Hôpital Général de Référence de Kintambo, avenue de l'OUA, Kintambo Magasin",
+    depart: { x: -75, z: 10 },            // devant l'hôpital, avenue de l'Hôpital
+    monument: null,
+    lignesSimulees: [
+      { axe: "Avenue de l’OUA", id: "sim_t1", ref: "T1", nom: "Minibus Avenue de l'OUA (ligne simulée)",
+        type: "minibus", depart: "Nord", terminus: "Sud", nbBus: 3 },
+    ],
+  },
 };
 
 export const ZONE_DEFAUT = "limete";

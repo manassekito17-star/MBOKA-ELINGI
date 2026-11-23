@@ -448,10 +448,11 @@ export function hopitalCinquantenaire(scene, physique, monde, site, principal) {
 }
 
 /** Tous les monuments de la zone Lingwala / Kasa-Vubu. */
-export function monumentsCentre(scene, physique, monde, m) {
+export function monumentsCentre(scene, physique, monde, m, modeles = new Set()) {
+  // Stade et hôpital : remplacés par leurs modèles individuels (js/batiments.js) quand ils existent.
   const r = {};
-  if (m?.stade) r.stade = stadeMartyrs(scene, physique, monde, m.stade.p);
+  if (m?.stade && !modeles.has("stade_martyrs")) r.stade = stadeMartyrs(scene, physique, monde, m.stade.p);
   if (m?.palais) r.palais = palaisDuPeuple(scene, physique, monde, m.palais.p);
-  if (m?.hopital_site && m?.hopital_principal) r.hopital = hopitalCinquantenaire(scene, physique, monde, m.hopital_site, m.hopital_principal);
+  if (m?.hopital_site && m?.hopital_principal && !modeles.has("cinquantenaire")) r.hopital = hopitalCinquantenaire(scene, physique, monde, m.hopital_site, m.hopital_principal);
   return r;
 }

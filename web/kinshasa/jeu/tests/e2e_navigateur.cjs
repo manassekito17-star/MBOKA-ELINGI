@@ -113,27 +113,32 @@ const assert = require("node:assert/strict");
   await page.goto(base + "/jeu/?zone=centre&nouveau=1&qualite=basse");
   await page.waitForFunction(() => window.__jeu, null, { timeout: 120000 });
   await page.waitForTimeout(4000);
-  const mc = await page.evaluate(() => Object.keys(window.__jeu.monuments).sort().join(","));
+  const mc = await page.evaluate(() => ({ monuments: Object.keys(window.__jeu.monuments).sort().join(","),
+    modeles: window.__jeu.remarquables.liste.filter((b) => b.objet).map((b) => b.id).sort().join(",") }));
   const ec = await etat();
-  verifier("Lingwala / Kasa-Vubu : stade, palais et hôpital construits", mc === "hopital,palais,stade");
+  verifier("Lingwala / Kasa-Vubu : palais construit ; stade et hôpital remplacés par leurs modèles individuels",
+    mc.monuments === "palais" && mc.modeles === "cinquantenaire,stade_martyrs");
   verifier("Lingwala / Kasa-Vubu : circulation affichée autour du joueur", ec.tuiles >= 9 && ec.trafic > 50 && ec.rendus > 0);
-  // Collision : le joueur ne traverse pas la façade du stade.
-  const bloque = await page.evaluate(async () => {
-    const j = window.__jeu, s = j.monuments.stade;
-    const pts = j.monde.manifest.monuments.stade.p;
-    let far = [pts[0], pts[1]];
-    for (let i = 0; i < pts.length; i += 2) if (Math.hypot(pts[i] - s.x, pts[i + 1] - s.z) > Math.hypot(far[0] - s.x, far[1] - s.z)) far = [pts[i], pts[i + 1]];
-    const u = [(far[0] - s.x), (far[1] - s.z)], l = Math.hypot(...u);
-    const x = far[0] + u[0] / l * 3, z = far[1] + u[1] / l * 3;
+  // Collision : en courant vers le centre du stade depuis l'extérieur, le joueur est arrêté par le mur
+  // de la coursive (sous la tribune basse) et n'atteint pas la piste.
+  const bloque = await page.evaluate(() => {
+    const j = window.__jeu, s = j.remarquables.liste.find((b) => b.id === "stade_martyrs");
+    const e = s.emprises[0];
+    let proche = [e[0], e[1]];
+    for (let i = 0; i < e.length; i += 2) if (Math.hypot(e[i] - s.x, e[i + 1] - s.z) < Math.hypot(proche[0] - s.x, proche[1] - s.z)) proche = [e[i], e[i + 1]];
+    const u = [proche[0] - s.x, proche[1] - s.z], l = Math.hypot(...u);
+    const x = proche[0] + u[0] / l * 3, z = proche[1] + u[1] / l * 3;
     j.joueur.teleporter(x, j.monde.hauteur(x, z) + 1.2, z);
     j.ctl.lacet = Math.atan2(u[0] / l, u[1] / l);   // regarder vers le stade
-    return { x, z, cx: s.x, cz: s.z };
+    return { x, z, cx: s.x, cz: s.z, t: j.sim.t };
   });
-  await page.keyboard.down("KeyW"); await page.waitForTimeout(7000); await page.keyboard.up("KeyW");
+  await page.keyboard.down("ShiftLeft"); await page.keyboard.down("KeyW");
+  await page.waitForFunction((t0) => window.__jeu.sim.t >= t0 + 14, bloque.t, { timeout: 600000, polling: 250 });
+  await page.keyboard.up("KeyW"); await page.keyboard.up("ShiftLeft");
   const apres = await page.evaluate(() => { const q = window.__jeu.joueur.position(); return [q.x, q.z]; });
   const d0 = Math.hypot(bloque.x - bloque.cx, bloque.z - bloque.cz), d1 = Math.hypot(apres[0] - bloque.cx, apres[1] - bloque.cz);
   console.log(`   (distance au centre du stade : ${d0.toFixed(1)} m -> ${d1.toFixed(1)} m)`);
-  verifier("Lingwala / Kasa-Vubu : le mur du stade arrête le joueur", d0 - d1 > 1 && d1 > d0 - 4);
+  verifier("Lingwala / Kasa-Vubu : le mur du stade arrête le joueur avant la piste", d0 - d1 > 5 && d1 > 62);
 
   // 11. Quatrième zone : Kalamu (Matonge, Rond-point Victoire).
   await page.goto(base + "/jeu/?zone=kalamu&nouveau=1&qualite=basse");

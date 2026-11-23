@@ -52,6 +52,8 @@ export class Monde {
     const r = this.manifest.relief;
     const buf = await (await fetch(this.base + "relief.bin")).arrayBuffer();
     this.relief = new Relief(new Float32Array(buf), r.nx ?? r.n, r.pas, r.nz ?? r.n);
+    // Terrassement des sites modélisés à part (bâtiments remarquables), avant le sol et la physique.
+    if (this.preparerRelief) this.preparerRelief(this.manifest, this.relief);
     this.reseau = await (await fetch(this.base + "reseau.json")).json();
     this.index = new Map(this.manifest.tuiles.map((t) => [`${t.i}_${t.j}`, t]));
     // Carrefours (au moins 3 tronçons se rejoignent) : pas de trottoir en travers des rues.
@@ -155,6 +157,18 @@ export class Monde {
     this.enCours.add(k);
     try {
       const d = await (await fetch(this.base + this.index.get(k).f)).json();
+      // Bâtiments remarquables modélisés à part (GLB) : les bâtiments génériques de leur emprise ne sont
+      // ni construits ni solides (la carte garde leurs empreintes réelles, dans d.b).
+      let bats = d.b;
+      if (this.exclusions?.length) {
+        bats = d.b.filter((b) => {
+          const n = b.p.length / 2;
+          let x = 0, z = 0;
+          for (let i = 0; i < n; i++) { x += b.p[2 * i]; z += b.p[2 * i + 1]; }
+          return !this.exclusions.some((e) => dansPolygone(x / n, z / n, e));
+        });
+      }
+      const dc = bats === d.b ? d : { ...d, b: bats };
       const groupe = new THREE.Group();
       groupe.name = "tuile_" + k;
       const corps = [];
@@ -163,24 +177,28 @@ export class Monde {
       this._arbresRue = [];
       if (d.r.length) groupe.add(this.M ? this._routesPBR(d.r) : this._routes(d.r));
       let details = null, corpsBat = null;
-      if (d.b.length && this.M) {
-        const r = construireBatiments(d.b, this.M, this.qualite);
+      if (bats.length && this.M) {
+        const r = construireBatiments(bats, this.M, this.qualite);
         corpsBat = r.corps; details = r.details;
         groupe.add(corpsBat);
         if (r.triangles.length) corps.push(this.physique.ajouterMaillageFixe(r.triangles));
         // Murs de clôture et portails des parcelles (générés).
-        const cl = construireClotures(d, this.M, (x, z) => this.hauteur(x, z));
+        const cl = construireClotures(dc, this.M, (x, z) => this.hauteur(x, z));
         if (cl) {
           groupe.add(cl.groupe);
           if (cl.triangles.length) corps.push(this.physique.ajouterMaillageFixe(cl.triangles));
         }
-      } else if (d.b.length) {
-        const { mesh, triangles } = this._batiments(d.b);
+      } else if (bats.length) {
+        const { mesh, triangles } = this._batiments(bats);
         groupe.add(mesh);
         corps.push(this.physique.ajouterMaillageFixe(triangles));
       }
-      const estimes = this.M ? this._arbresCours(d, k) : [];
-      if (this.M && (d.t.length || this._arbresRue.length || estimes.length)) groupe.add(construireArbres([...d.t, ...this._arbresRue, ...estimes], this.M, this.qualite));
+      let estimes = this.M ? this._arbresCours(d, k) : [];
+      // Sites modélisés : on retire les arbres ESTIMÉS (indicateur 1), on garde les arbres réels d'OSM (0).
+      const horsSite = (a) => !a[3] || !this.exclusions?.some((e) => dansPolygone(a[0], a[2], e));
+      if (this.exclusions?.length) { estimes = estimes.filter(horsSite); this._arbresRue = this._arbresRue.filter(horsSite); }
+      const arbresTuile = this.exclusions?.length ? d.t.filter(horsSite) : d.t;
+      if (this.M && (arbresTuile.length || this._arbresRue.length || estimes.length)) groupe.add(construireArbres([...arbresTuile, ...this._arbresRue, ...estimes], this.M, this.qualite));
       else if (d.t.length) groupe.add(this._arbres(d.t));
       const lamp = this._lampadaires(d.r, k);
       if (lamp) groupe.add(lamp);

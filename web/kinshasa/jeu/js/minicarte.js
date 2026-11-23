@@ -132,6 +132,24 @@ export class Carte {
         if (dans(q)) this._icone(ctx, q, a.reel ? "#1565c0" : "#607d8b", "B", taille - 3);
       }
     }
+    // Bâtiments remarquables (modèles individuels) : emprise dorée, étoile, nom sur la grande carte.
+    for (const b of this.remarquables || []) {
+      for (const e of b.emprises) {
+        ctx.beginPath();
+        for (let i = 0; i < e.length; i += 2) { const q = P(e[i], e[i + 1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }
+        ctx.closePath();
+        ctx.strokeStyle = "rgba(242,178,51,0.9)"; ctx.lineWidth = vue.grande ? 2 : 1.5; ctx.stroke();
+      }
+      const q = P(b.x, b.z);
+      if (!dans(q)) continue;
+      this._icone(ctx, q, "#f2b233", "★", taille + 2);
+      if (vue.grande) {
+        ctx.font = `bold ${taille - 2}px system-ui, sans-serif`;
+        ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,0.75)"; ctx.fillStyle = "#ffe08a";
+        ctx.strokeText(b.nom_courant, q[0], q[1] + taille + 4); ctx.fillText(b.nom_courant, q[0], q[1] + taille + 4);
+        ctx.font = `bold ${taille - 3}px system-ui, sans-serif`;
+      }
+    }
     for (const v of vue.flotte || []) {
       const p = v.position(), q = P(p.x, p.z);
       if (dans(q)) this._icone(ctx, q, "#2e7d32", "🚗", taille);

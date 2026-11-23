@@ -13,11 +13,13 @@ export function creerMenu(ctx) {
   const menu = $("menu"), contenu = $("menu-contenu");
   let onglet = null, sousOnglet = "commandes", vueCarte = null;
 
-  function ouvrir(o = "reprendre") {
+  let lieuChoisi = null, inventaire = null;
+  function ouvrir(o = "reprendre", sel = null) {
     if (!ctx.peutOuvrir()) return;
     menu.hidden = false;
     ctx.pause(true);
     document.exitPointerLock?.();
+    if (sel) lieuChoisi = sel;
     afficher(o === "reprendre" ? "carte" : o);
   }
   function fermer() {
@@ -44,8 +46,66 @@ export function creerMenu(ctx) {
     infos();
     vueCarte = null;
     contenu.onclick = null;
-    ({ carte: ongletCarte, personnage: ongletPersonnage, vehicules: ongletVehicules, missions: ongletMissions, transports: ongletTransports,
+    ({ carte: ongletCarte, lieux: ongletLieux, personnage: ongletPersonnage, vehicules: ongletVehicules, missions: ongletMissions, transports: ongletTransports,
       zones: ongletZones, parametres: ongletParametres, sauvegarde: ongletSauvegarde, quitter: ongletQuitter }[o] || ongletCarte)();
+  }
+
+  // --- Lieux remarquables : fiche de chaque bâtiment modélisé individuellement ------------
+  const STATUTS = { photo: "photo", osm: "OSM", satellite: "satellite", estime: "estimé", deduit: "déduit", absent: "absent" };
+  function ongletLieux() {
+    const tous = ctx.registre.batiments;
+    if (!tous.length) { contenu.innerHTML = `<p class="note">Aucun bâtiment remarquable n'est encore modélisé.</p>`; return; }
+    const p = ctx.positionJoueur();
+    const ici = (b) => ctx.remarquables.liste.find((x) => x.id === b.id);
+    if (!tous.some((b) => b.id === lieuChoisi)) lieuChoisi = (tous.find((b) => ici(b)) || tous[0]).id;
+    const b = tous.find((x) => x.id === lieuChoisi), r = ici(b);
+    const photos = (b.references || []).map((id) => ctx.registre.photos.find((ph) => ph.id === id)).filter(Boolean);
+    const dist = r ? Math.round(Math.hypot(r.x - p.x, r.z - p.z)) : null;
+    contenu.innerHTML = `<div class="lieux-grille">
+      <div class="lieux-liste">${tous.map((x) => `<button class="btn ${x.id === lieuChoisi ? "principal" : ""}" data-lieu-fiche="${x.id}">
+        <b>${esc(x.nom_courant)}</b><small>${esc(x.categorie_libelle)} · ${esc(x.commune)}${ici(x) ? "" : " · autre zone"}</small></button>`).join("")}
+        <p class="note">Bâtiments reproduits un par un d'après des références vérifiables. Les autres bâtiments de la ville gardent leur forme réelle (empreinte), avec une apparence générique.</p>
+        <div class="note" id="inventaire-resume">Inventaire de la ville…</div></div>
+      <div class="fiche fiche-lieu">
+        <h3>${esc(b.nom_courant)}</h3>
+        <p class="sous-titre">${esc(b.nom_officiel)}${b.autres_noms?.length ? " · " + esc(b.autres_noms.join(" · ")) : ""}</p>
+        <div class="ligne"><span>Catégorie</span><b>${esc(b.categorie_libelle)}</b></div>
+        <div class="ligne"><span>Adresse</span><b>${esc(b.adresse)}</b></div>
+        <div class="ligne"><span>Commune</span><b>${esc(b.commune)}, Kinshasa</b></div>
+        <div class="ligne"><span>Coordonnées GPS</span><b>${b.gps.lat.toFixed(5)}, ${b.gps.lon.toFixed(5)}</b></div>
+        ${dist !== null ? `<div class="ligne"><span>Distance</span><b>${dist >= 1000 ? (dist / 1000).toFixed(1).replace(".", ",") + " km" : dist + " m"}</b></div>` : ""}
+        <div class="ligne"><span>Vérifié le</span><b>${esc(b.date_verification)}</b></div>
+        <p>${esc(b.description)}</p>
+        <div>${r ? `<button class="btn principal" data-lieu-gps="${b.id}">Destination GPS</button>` : `<button class="btn principal" data-lieu-aller="${b.id}">Y aller (zone ${esc(b.zone)})</button>`}
+          ${r?.objet ? `<button class="btn" data-lieu-voir="${b.id}">Regarder le bâtiment</button>` : ""}
+          ${b.modele ? `<a class="btn" href="visionneuse.html?id=${encodeURIComponent(b.id)}" target="_blank" rel="noopener">Modèle 3D et comparaison</a>` : ""}</div>
+        <h4>Fidélité : <span class="niveau ${esc(b.fidelite.niveau)}">${esc(b.fidelite.niveau)}</span></h4>
+        <p class="note">${esc(b.fidelite.resume)}</p>
+        <ul class="elements">${b.fidelite.elements.map((e) => `<li><span class="statut ${esc(e.statut)}">${STATUTS[e.statut] || esc(e.statut)}</span>${esc(e.element)}</li>`).join("")}</ul>
+        ${(b.notes || []).map((n) => `<p class="note">${esc(n)}</p>`).join("")}
+        <h4>Photos de référence</h4>
+        ${photos.length ? `<div class="refs">${photos.map((ph) => `<figure><img src="${esc(ph.fichier)}" alt="${esc(ph.montre)}" loading="lazy">
+          <figcaption><a href="${esc(ph.page)}" target="_blank" rel="noopener">${esc(ph.auteur)}</a>, ${esc(ph.licence)}, ${esc(ph.date)}</figcaption></figure>`).join("")}</div>`
+          : `<p class="note">Aucune photo sous licence libre trouvée pour ce bâtiment : son apparence n'est pas vérifiée.</p>`}
+        <h4>Sources</h4>
+        <ul class="sources">${b.sources.map((u) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//, "").slice(0, 70))}</a></li>`).join("")}</ul>
+      </div></div>`;
+    // Inventaire automatique (Overture) : ce qui reste à reproduire, par ordre de priorité.
+    (inventaire ||= fetch("donnees/inventaire_batiments.json").then((r) => r.json()).catch(() => null)).then((inv) => {
+      const el = $("inventaire-resume");
+      if (!el) return;
+      if (!inv) { el.textContent = ""; return; }
+      el.innerHTML = `<b>Inventaire de Kinshasa</b> (${inv.lieux.length} lieux, Overture Maps) :<br>` +
+        Object.entries(inv.resume).map(([k, v]) => `${v.priorite}. ${esc(k)} : ${v.modelises} / ${v.total}`).join("<br>");
+    });
+    contenu.onclick = (e) => {
+      const t = e.target.closest("button");
+      if (!t) return;
+      if (t.dataset.lieuFiche) { lieuChoisi = t.dataset.lieuFiche; ongletLieux(); }
+      if (t.dataset.lieuGps) { ctx.allerVers(b); ongletLieux(); }
+      if (t.dataset.lieuAller) ctx.allerVers(b);
+      if (t.dataset.lieuVoir) ctx.regarderBatiment(r);
+    };
   }
 
   // --- Carte de la zone (vraies données), destination GPS au clic ---------------------
