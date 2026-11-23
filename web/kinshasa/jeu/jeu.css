@@ -44,7 +44,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0c0d10; col
 #tactile button small { font-size: 9px; margin-top: 3px; opacity: 0.85; }
 #tactile button.actif { background: var(--accent); color: #111; }
 @media (max-width: 700px) {
-  #message { max-width: calc(100vw - 24px); top: auto; bottom: 200px; font-size: 13px; }
+  /* téléphone : message et circulation sous les boutons du haut, loin des commandes tactiles du bas */
+  #message { max-width: calc(100vw - 24px); top: 226px; bottom: auto; font-size: 13px; }
   #hud-vitesse { bottom: auto; top: 100px; min-width: 120px; }
   #vitesse { font-size: 28px; }
 }
@@ -70,6 +71,6 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0c0d10; col
 .panneau th, .panneau td { text-align: left; padding: 5px 6px; border-bottom: 1px solid #333; }
 .panneau .reel { color: #7ee07e; } .panneau .simule { color: #f0b35a; }
 .panneau .actions { margin-top: 12px; text-align: right; }
-@media (max-width: 700px) { #hud-trafic { top: auto; bottom: 175px; font-size: 11px; } }
+@media (max-width: 700px) { #hud-trafic { top: 192px; bottom: auto; font-size: 11px; } }
 .panneau .zones { display: grid; gap: 8px; }
 .panneau .zones button { text-align: left; line-height: 1.35; }

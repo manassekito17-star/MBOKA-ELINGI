@@ -68,7 +68,9 @@ html, body { margin: 0; height: 100%; background: var(--fond); color: var(--text
 @media (max-width: 640px) {
   .titre span { display: none; }
   .titre { padding: 8px 10px; }
-  #outils { top: auto; bottom: 120px; }
+  /* outils en haut à droite : le bas de l'écran reste aux commandes de la carte (zoom, boussole, position) */
+  #outils { top: 74px; bottom: auto; gap: 6px; }
+  #outils button { padding: 7px 10px; font-size: 13px; }
   #filtres { top: 74px; }
   #stats { display: none; }
   #legende { bottom: auto; top: 74px; right: 76px; max-width: 200px; font-size: 12px; }

@@ -1,5 +1,7 @@
 # MBOKA ELENGI
 
+> **En ligne : https://manassekito17-star.github.io/MBOKA-ELINGI/** (carte 3D) · **https://manassekito17-star.github.io/MBOKA-ELINGI/jeu/** (mode jeu). Publication automatique à chaque envoi sur GitHub (GitHub Pages).
+>
 > **Nouveau : Kinshasa 3D (version web).** Une carte 3D de **toute l'agglomération** (1,38 million de bâtiments réels, relief, satellite, recherche) et un **mode jeu** jouable à pied et en véhicule dans quatre zones : **Limete**, la **Gombe**, **Lingwala / Kasa-Vubu** (Stade des Martyrs, Palais du Peuple, Hôpital du Cinquantenaire) et **Kalamu** (Matonge, Rond-point Victoire) (avec circulation, bus et moto-taxis simulés). Détails, sources, niveaux de confiance et plan : [docs/JUMEAU_NUMERIQUE.md](docs/JUMEAU_NUMERIQUE.md). Lancement : `python tools/jumeau/serveur_local.py`, puis ouvrir http://localhost:8080/
 >
 > **Rendu réaliste** (matériaux photographiques, architecture kinoise générée, rues, végétation, reflets) : [docs/RENDU_REALISTE.md](docs/RENDU_REALISTE.md).

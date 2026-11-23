@@ -183,6 +183,14 @@ Pour le prototype, le coût est de **0 €**.
 
 ## 7. Lancer et tester
 
+**En ligne** : la carte et le jeu sont sur GitHub Pages :
+- carte : https://manassekito17-star.github.io/MBOKA-ELINGI/
+- jeu : https://manassekito17-star.github.io/MBOKA-ELINGI/jeu/
+
+Le site est republié automatiquement (`.github/workflows/publier-site.yml`) à chaque envoi qui modifie `web/kinshasa/`.
+
+Le 23/11/2026, le test navigateur complet a été passé **sur le site public** : 27 vérifications sur 27. Un essai sur téléphone simulé a aussi été fait : jeu chargé en 8 s, qualité basse choisie automatiquement.
+
 ```
 # 1. Serveur local (gère les requêtes « Range » nécessaires aux fichiers PMTiles)
 python tools/jumeau/serveur_local.py 8080
